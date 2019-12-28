@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 import os
 from time import time
-from train import Params, View, WrappedDataLoader, transform, preprocess, config_path
+from tools.train import Params, View, WrappedDataLoader, transform, preprocess, config_path
 import argparse
 import importlib
 
