@@ -10,6 +10,8 @@ from torchvision import transforms
 from PIL import Image
 import os
 import numpy as np
+import argparse
+import importlib
 
 
 class WrappedDataLoader:
@@ -301,3 +303,11 @@ def train(params: Params):
     # Start training
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
     fit(model_params)    
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="APE, A simPle image classification framEwork")
+    parser.add_argument('--config', dest='config_path', nargs=1, required=True, help='specify the config location')
+    args = parser.parse_args()
+    params = importlib.import_module(args.config_path[0])
+    train(params.params)
