@@ -16,7 +16,7 @@ class nn_train(object):
 
 
 def preprocess(img, dev, transform_img_size_x, transform_img_size_y):
-    img = img.convert('L')
+    img = img.convert("L")
     size = img.size
     if size[0] > size[1]:
         img = img.rotate(90)
@@ -35,11 +35,11 @@ def load_cp(model_path, name, dev):
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)
-    epoch = checkpoint['epoch']
-    model = checkpoint['model']
-    acc = checkpoint['acc']
-    max_acc = checkpoint['max_acc']
-    print(f'Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.')
+    epoch = checkpoint["epoch"]
+    model = checkpoint["model"]
+    acc = checkpoint["acc"]
+    max_acc = checkpoint["max_acc"]
+    print(f"Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
     return model
 
 

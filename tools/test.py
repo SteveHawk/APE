@@ -10,11 +10,11 @@ def load_cp(model_path, name, dev):
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)
-    epoch = checkpoint['epoch']
-    model = checkpoint['model']
-    acc = checkpoint['acc']
-    max_acc = checkpoint['max_acc']
-    print(f'Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.')
+    epoch = checkpoint["epoch"]
+    model = checkpoint["model"]
+    acc = checkpoint["acc"]
+    max_acc = checkpoint["max_acc"]
+    print(f"Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
     return model
 
 

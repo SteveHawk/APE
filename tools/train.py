@@ -77,7 +77,7 @@ class Model_Params(Params):
 
 def transform(transform_img_size_x, transform_img_size_y, ds_mean, ds_std):
     def _transform(img):
-        img = img.convert('L')
+        img = img.convert("L")
         size = img.size
         if size[0] > size[1]:
             img = img.rotate(90)
@@ -134,12 +134,12 @@ def loss_batch(model, loss_func, xb, yb, opt=None):
 # Save checkpoint
 def save_cp(model_params, epoch, acc, name):
     checkpoint = {
-        'epoch': epoch,
-        'model': model_params.model,
-        'optimizer': model_params.opt.state_dict(),
-        'scheduler': model_params.scheduler.state_dict(),
-        'acc': acc,
-        'max_acc': model_params.max_acc,
+        "epoch": epoch,
+        "model": model_params.model,
+        "optimizer": model_params.opt.state_dict(),
+        "scheduler": model_params.scheduler.state_dict(),
+        "acc": acc,
+        "max_acc": model_params.max_acc,
     }
     path = os.path.join(model_params.model_path, name)
     torch.save(checkpoint, path)
@@ -150,13 +150,13 @@ def load_cp(model, opt, scheduler, model_path, name, dev):
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)
-    start_epoch = checkpoint['epoch'] + 1
-    model = checkpoint['model']
-    opt.load_state_dict(checkpoint['optimizer'])
-    scheduler.load_state_dict(checkpoint['scheduler'])
-    acc = checkpoint['acc']
-    max_acc = checkpoint['max_acc']
-    print(f'Loading checkpoint starting at epoch={start_epoch}, acc={acc}, max_acc={max_acc}.')
+    start_epoch = checkpoint["epoch"] + 1
+    model = checkpoint["model"]
+    opt.load_state_dict(checkpoint["optimizer"])
+    scheduler.load_state_dict(checkpoint["scheduler"])
+    acc = checkpoint["acc"]
+    max_acc = checkpoint["max_acc"]
+    print(f"Loading checkpoint starting at epoch={start_epoch}, acc={acc}, max_acc={max_acc}.")
     return start_epoch, model, opt, scheduler, max_acc
 
 
@@ -307,7 +307,7 @@ def train(params: Params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="APE, A simPle image classification framEwork")
-    parser.add_argument('--config', dest='config_path', nargs=1, required=True, help='specify the config location')
+    parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     args = parser.parse_args()
     params = importlib.import_module(args.config_path[0])
     train(params.params)
