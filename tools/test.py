@@ -3,7 +3,9 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 import os
 from time import time
-from train import Params, View, WrappedDataLoader, transform, preprocess
+from train import Params, View, WrappedDataLoader, transform, preprocess, config_path
+import argparse
+import importlib
 
 
 def load_cp(model_path, name, dev):
@@ -60,3 +62,11 @@ def test(params):
 
     print(f"Total: {total}, Correct: {correct}")
     print(f"Test Set Accuracy: {test_acc}%.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test the model's accuracy and performance.")
+    parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
+    args = parser.parse_args()
+    params = importlib.import_module(config_path(args.config_path[0]))
+    test(params.params)
