@@ -247,7 +247,7 @@ def fit(model_params):
 
 def train(params: Params):
     # Device settings
-    if not params.dev_num:
+    if params.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{params.dev_num}")
