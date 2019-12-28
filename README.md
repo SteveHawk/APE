@@ -20,8 +20,8 @@ Tensorboard==1.14.0 (better with tensorflow installed, but not required)
 
 Before running, you should set the `PYTHONPATH` environment variable to the root of this project folder. Use `$env:PYTHONPATH="."` in PowerShell, or `export PYTHONPATH=$PYTHONPATH:.` in Bash.
 
-To train the model, first define a model config, `configs/model.py` for example. Then run `tools/train.py --config configs/model.py`.
+To train the model, first define a model config, `configs/model.py` for example. Then run `python -u tools/train.py --config configs/model.py`.
 
 You can also resume training using the model checkpoint, just set `resume = True` and set the model dir/name.
 
-To test the model using test set, run `tools/test.py --config <YOUR-CONFIG-LOCATION>`.
+To test the model using test set, run `python -u tools/test.py --config <YOUR-CONFIG-LOCATION>`.
