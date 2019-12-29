@@ -55,7 +55,7 @@ def predict(images):
     dev_num = None
 
     # Device settings
-    if not dev_num:
+    if params.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{dev_num}")

@@ -22,7 +22,7 @@ def load_cp(model_path, name, dev):
 
 def test(params):
     # Device settings
-    if not params.dev_num:
+    if params.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{params.dev_num}")
