@@ -37,23 +37,6 @@ class View(nn.Module):
         return x.view(x.size(0), -1)
 
 
-class Model_Params:
-    def __init__(self, model, epochs, start_epoch, loss_func, opt, scheduler, train_dl, valid_dl, max_acc, target_acc, verbose, model_path, writer):
-        self.model = model
-        self.epochs = epochs
-        self.start_epoch = start_epoch
-        self.loss_func = loss_func
-        self.opt = opt
-        self.scheduler = scheduler
-        self.train_dl = train_dl
-        self.valid_dl = valid_dl
-        self.max_acc = max_acc
-        self.target_acc = target_acc
-        self.verbose = verbose
-        self.model_path = model_path
-        self.writer = writer
-
-
 def transform(transform_img_size_x, transform_img_size_y, ds_mean, ds_std):
     def _transform(img):
         img = img.convert("L")
@@ -170,7 +153,7 @@ def cal_acc(model, epoch, dl, verbose, writer, catagory) -> float:
     return acc
 
 
-def training_info(model_params: Model_Params, epoch: int) -> Tuple[float]:
+def training_info(model_params: object, epoch: int) -> Tuple[float]:
     model = model_params.model
     loss_func = model_params.loss_func
     train_dl = model_params.train_dl
@@ -186,43 +169,7 @@ def training_info(model_params: Model_Params, epoch: int) -> Tuple[float]:
     return train_loss, valid_loss, train_acc, valid_acc
 
 
-def fit(model_params: Model_Params) -> None:
-    for epoch in range(model_params.start_epoch, model_params.epochs):
-        # Training mode
-        model_params.model.train()
-        counter = 0
-        for xb, yb in model_params.train_dl:
-            loss_batch(model_params.model, model_params.loss_func, xb, yb, model_params.opt)
-            # Epoch progress bar
-            if model_params.verbose[4]:
-                counter += 1
-                progress = round(100 * counter / len(model_params.train_dl), 2)
-                print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
-        model_params.scheduler.step()
-
-        # Training info calculation
-        train_loss, valid_loss, train_acc, valid_acc = training_info(model_params, epoch)
-        print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
-
-        # Save models
-        if model_params.verbose[3]:
-            # Save best record
-            if valid_acc > model_params.max_acc:
-                model_params.max_acc = valid_acc
-                save_cp(model_params, epoch, valid_acc, f"model_checkpoint_max_acc.pth.tar")
-            # Save target model
-            if valid_acc > model_params.target_acc:
-                save_cp(model_params, epoch, valid_acc, f"target_acc_{epoch}.pth.tar")
-                print("Accuracy target reached, model saved. Training stopped.")
-                model_params.writer.close()
-                return
-
-        # Save checkpoint
-        save_cp(model_params, epoch, valid_acc, f"model_checkpoint_{epoch}.pth.tar")
-        print(f"Checkpoint of epoch={epoch} saved.")
-
-
-def train(params: object) -> None:
+def prepare(params: object) -> object:
     # Device settings
     if params.dev_num is None:
         dev = torch.device("cpu")
@@ -262,25 +209,64 @@ def train(params: object) -> None:
     # Writer will output to ./runs/ directory by default
     writer = SummaryWriter(flush_secs=30)
 
-    model_params = Model_Params(
-        model,
-        params.epochs,
-        start_epoch,
-        loss_func,
-        opt,
-        scheduler,
-        train_dl,
-        valid_dl,
-        max_acc,
-        params.target_acc,
-        params.verbose,
-        params.model_path,
+    class Model_Params:
+        model
+        params.epochs
+        start_epoch
+        loss_func
+        opt
+        scheduler
+        train_dl
+        valid_dl
+        max_acc
+        params.target_acc
+        params.verbose
+        params.model_path
         writer
-    )
 
-    # Start training
+    return Model_Params()
+
+
+def train(params: object) -> None:
+    # Preparation jobs
+    model_params = prepare(params)
+
+    # Info header
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
-    fit(model_params)
+
+    for epoch in range(model_params.start_epoch, model_params.epochs):
+        # Training mode
+        model_params.model.train()
+        counter = 0
+        for xb, yb in model_params.train_dl:
+            loss_batch(model_params.model, model_params.loss_func, xb, yb, model_params.opt)
+            # Epoch progress bar
+            if model_params.verbose[4]:
+                counter += 1
+                progress = round(100 * counter / len(model_params.train_dl), 2)
+                print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
+        model_params.scheduler.step()
+
+        # Training info calculation
+        train_loss, valid_loss, train_acc, valid_acc = training_info(model_params, epoch)
+        print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
+
+        # Save models
+        if model_params.verbose[3]:
+            # Save best record
+            if valid_acc > model_params.max_acc:
+                model_params.max_acc = valid_acc
+                save_cp(model_params, epoch, valid_acc, f"model_checkpoint_max_acc.pth.tar")
+            # Save target model
+            if valid_acc > model_params.target_acc:
+                save_cp(model_params, epoch, valid_acc, f"target_acc_{epoch}.pth.tar")
+                print("Accuracy target reached, model saved. Training stopped.")
+                model_params.writer.close()
+                return
+
+        # Save checkpoint
+        save_cp(model_params, epoch, valid_acc, f"model_checkpoint_{epoch}.pth.tar")
+        print(f"Checkpoint of epoch={epoch} saved.")
 
 
 def config_path_process(path: str) -> str:
@@ -299,6 +285,6 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
-    params = importlib.import_module(config_path_process(config_path))
+    config = importlib.import_module(config_path_process(config_path))
 
-    train(params.Params())
+    train(config.Params())
