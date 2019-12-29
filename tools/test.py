@@ -64,9 +64,22 @@ def test(params):
     print(f"Test Set Accuracy: {test_acc}%.")
 
 
+def config_path_process(path: str) -> str:
+    path = path.lstrip("./\\")
+    path = path.rstrip("py")
+    path = path.rstrip(".")
+    path = path.replace("/", ".")
+    path = path.replace("\\", ".")
+    return path
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test the model's accuracy and performance.")
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     args = parser.parse_args()
-    params = importlib.import_module(config_path(args.config_path[0]))
+
+    config_path = args.config_path[0]
+    assert os.path.isfile(config_path)
+    params = importlib.import_module(config_path_process(config_path))
+
     test(params.Params())
