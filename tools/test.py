@@ -80,6 +80,6 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
-    params = importlib.import_module(config_path_process(config_path))
+    config = importlib.import_module(config_path_process(config_path))
 
-    test(params.Params())
+    test(config.Params())
