@@ -283,7 +283,7 @@ def train(params):
     fit(model_params)    
 
 
-def config_path(path: str) -> str:
+def config_path_process(path: str) -> str:
     path = path.lstrip("./\\")
     path = path.rstrip("py")
     path = path.rstrip(".")
@@ -296,5 +296,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="APE, A simPle image classification framEwork")
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     args = parser.parse_args()
-    params = importlib.import_module(config_path(args.config_path[0]))
+
+    config_path = args.config_path[0]
+    assert os.path.isfile(config_path)
+    params = importlib.import_module(config_path_process(config_path))
     train(params.Params())
