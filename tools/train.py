@@ -209,20 +209,37 @@ def prepare(params: object) -> object:
     # Writer will output to ./runs/ directory by default
     writer = SummaryWriter(flush_secs=30)
 
+    # TODO: Use a better way to do this
     class Model_Params:
-        model
-        params.epochs
-        start_epoch
-        loss_func
-        opt
-        scheduler
-        train_dl
-        valid_dl
-        max_acc
-        params.target_acc
-        params.verbose
-        params.model_path
-        writer
+        def __init__(self):
+            self.model = model
+            self.num_epochs = params.num_epochs
+            self.start_epoch = start_epoch
+            self.loss_func = loss_func
+            self.opt = opt
+            self.scheduler = scheduler
+            self.train_dl = train_dl
+            self.valid_dl = valid_dl
+            self.max_acc = max_acc
+            self.target_acc = params.target_acc
+            self.verbose = params.verbose
+            self.model_path = params.model_path
+            self.writer = writer
+
+    # class Model_Params:
+    #     model
+    #     params.num_epochs
+    #     start_epoch = start_epoch
+    #     loss_func
+    #     opt
+    #     scheduler
+    #     train_dl
+    #     valid_dl
+    #     max_acc
+    #     params.target_acc
+    #     params.verbose
+    #     params.model_path
+    #     writer
 
     return Model_Params()
 
@@ -234,7 +251,7 @@ def train(params: object) -> None:
     # Info header
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
 
-    for epoch in range(model_params.start_epoch, model_params.epochs):
+    for epoch in range(model_params.start_epoch, model_params.num_epochs):
         # Training mode
         model_params.model.train()
         counter = 0
