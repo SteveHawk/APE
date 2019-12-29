@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 import os
 from time import time
-from tools.train import Params, View, WrappedDataLoader, transform, preprocess, config_path
+from tools.train import View, WrappedDataLoader, transform, preprocess, config_path
 import argparse
 import importlib
 
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     args = parser.parse_args()
     params = importlib.import_module(config_path(args.config_path[0]))
-    test(params.params)
+    test(params.Params())

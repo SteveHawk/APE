@@ -183,7 +183,7 @@ def training_info(model_params, epoch):
     valid_loss = cal_loss(model, epoch, loss_func, valid_dl, verbose[1], writer, "Loss/validation")
     train_acc = cal_acc(model, epoch, train_dl, verbose[2], writer, "Accuracy/train")
     valid_acc = cal_acc(model, epoch, valid_dl, verbose[3], writer, "Accuracy/validation")
-    
+
     return train_loss, valid_loss, train_acc, valid_acc
 
 
@@ -200,7 +200,7 @@ def fit(model_params):
                 progress = round(100 * counter / len(model_params.train_dl), 2)
                 print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
         model_params.scheduler.step()
-        
+
         # Training info calculation
         train_loss, valid_loss, train_acc, valid_acc = training_info(model_params, epoch)
         print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
@@ -217,7 +217,7 @@ def fit(model_params):
                 print("Accuracy target reached, model saved. Training stopped.")
                 model_params.writer.close()
                 return
-        
+
         # Save checkpoint
         save_cp(model_params, epoch, valid_acc, f"model_checkpoint_{epoch}.pth.tar")
         print(f"Checkpoint of epoch={epoch} saved.")
@@ -257,7 +257,8 @@ def train(params):
     # Create model_path folder
     if not os.path.exists(params.model_path):
         os.makedirs(params.model_path)
-    
+    assert os.path.exists(params.model_path)
+
     # For Tensorboard
     # Writer will output to ./runs/ directory by default
     writer = SummaryWriter(flush_secs=30)
@@ -280,7 +281,7 @@ def train(params):
 
     # Start training
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
-    fit(model_params)    
+    fit(model_params)
 
 
 def config_path_process(path: str) -> str:
@@ -300,4 +301,5 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
     params = importlib.import_module(config_path_process(config_path))
+    
     train(params.Params())
