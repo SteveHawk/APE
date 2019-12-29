@@ -36,29 +36,7 @@ class View(nn.Module):
         return x.view(x.size(0), -1)
 
 
-class Params:
-    def __init__(self, model, epochs, bs, lr, target_acc, model_path, data_path, transform_img_size_x, transform_img_size_y, resume, resume_model_name, verbose, dev_num, num_workers, test_data_path, test_model_name, ds_mean=1, ds_std=1):
-        self.model = model
-        self.epochs = epochs
-        self.bs = bs
-        self.lr = lr
-        self.target_acc = target_acc
-        self.model_path = model_path
-        self.data_path = data_path
-        self.transform_img_size_x = transform_img_size_x
-        self.transform_img_size_y = transform_img_size_y
-        self.resume = resume
-        self.resume_model_name = resume_model_name
-        self.verbose = verbose
-        self.dev_num = dev_num
-        self.num_workers = num_workers
-        self.test_data_path = test_data_path
-        self.test_model_name = test_model_name
-        self.ds_mean = ds_mean
-        self.ds_std = ds_std
-
-
-class Model_Params(Params):
+class Model_Params:
     def __init__(self, model, epochs, start_epoch, loss_func, opt, scheduler, train_dl, valid_dl, max_acc, target_acc, verbose, model_path, writer):
         self.model = model
         self.epochs = epochs
@@ -245,7 +223,7 @@ def fit(model_params):
         print(f"Checkpoint of epoch={epoch} saved.")
 
 
-def train(params: Params):
+def train(params):
     # Device settings
     if params.dev_num is None:
         dev = torch.device("cpu")
@@ -319,4 +297,4 @@ if __name__ == "__main__":
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     args = parser.parse_args()
     params = importlib.import_module(config_path(args.config_path[0]))
-    train(params.params)
+    train(params.Params())
