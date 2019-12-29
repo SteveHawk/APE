@@ -12,6 +12,7 @@ import os
 import numpy as np
 import argparse
 import importlib
+from typing import Tuple
 
 
 class WrappedDataLoader:
@@ -76,7 +77,7 @@ def preprocess(transform_img_size_x, transform_img_size_y, dev):
     return _preprocess
 
 
-def load_data(data_path, transform, bs, transform_img_size_x, transform_img_size_y, dev, num_workers, ds_mean, ds_std):
+def load_data(data_path, transform, bs, transform_img_size_x, transform_img_size_y, dev, num_workers, ds_mean, ds_std) -> Tuple[WrappedDataLoader]:
     full_ds = ImageFolder(data_path, transform=transform(transform_img_size_x, transform_img_size_y, ds_mean, ds_std))
     print("ImageFolder Done.")
     print(full_ds.class_to_idx)
@@ -109,8 +110,7 @@ def loss_batch(model, loss_func, xb, yb, opt=None):
     return loss.item(), len(xb)
 
 
-# Save checkpoint
-def save_cp(model_params, epoch, acc, name):
+def save_cp(model_params, epoch, acc, name) -> None:
     checkpoint = {
         "epoch": epoch,
         "model": model_params.model,
@@ -123,7 +123,6 @@ def save_cp(model_params, epoch, acc, name):
     torch.save(checkpoint, path)
 
 
-# Load checkpoint.
 def load_cp(model, opt, scheduler, model_path, name, dev):
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
@@ -138,7 +137,7 @@ def load_cp(model, opt, scheduler, model_path, name, dev):
     return start_epoch, model, opt, scheduler, max_acc
 
 
-def cal_loss(model, epoch, loss_func, dl, verbose, writer, catagory):
+def cal_loss(model, epoch, loss_func, dl, verbose, writer, catagory) -> float:
     model.eval()
     if verbose:
         with torch.no_grad():
@@ -152,7 +151,7 @@ def cal_loss(model, epoch, loss_func, dl, verbose, writer, catagory):
     return loss
 
 
-def cal_acc(model, epoch, dl, verbose, writer, catagory):
+def cal_acc(model, epoch, dl, verbose, writer, catagory) -> float:
     model.eval()
     if verbose:
         correct = 0
@@ -171,7 +170,7 @@ def cal_acc(model, epoch, dl, verbose, writer, catagory):
     return acc
 
 
-def training_info(model_params, epoch):
+def training_info(model_params: Model_Params, epoch: int) -> Tuple[float]:
     model = model_params.model
     loss_func = model_params.loss_func
     train_dl = model_params.train_dl
@@ -187,7 +186,7 @@ def training_info(model_params, epoch):
     return train_loss, valid_loss, train_acc, valid_acc
 
 
-def fit(model_params):
+def fit(model_params: Model_Params) -> None:
     for epoch in range(model_params.start_epoch, model_params.epochs):
         # Training mode
         model_params.model.train()
@@ -223,7 +222,7 @@ def fit(model_params):
         print(f"Checkpoint of epoch={epoch} saved.")
 
 
-def train(params):
+def train(params: object) -> None:
     # Device settings
     if params.dev_num is None:
         dev = torch.device("cpu")
@@ -301,5 +300,5 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
     params = importlib.import_module(config_path_process(config_path))
-    
+
     train(params.Params())
