@@ -77,7 +77,7 @@ class Params:
     # How many processes/threads for dataloader. 0 means working in main process.
     num_workers = 0
 
-    #Location of test dataset
+    # Location of test dataset
     test_data_path = "/path/to/the/test_dataset/"
 
     # Name of the model to be tested
