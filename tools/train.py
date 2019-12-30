@@ -37,6 +37,10 @@ class View(nn.Module):
         return x.view(x.size(0), -1)
 
 
+class Params:
+    pass
+
+
 def transform(transform_img_size_x, transform_img_size_y, ds_mean, ds_std):
     def _transform(img):
         img = img.convert("L")
@@ -169,24 +173,24 @@ def training_info(model_params: object, epoch: int) -> Tuple[float]:
     return train_loss, valid_loss, train_acc, valid_acc
 
 
-def prepare(params: object) -> object:
+def prepare(Configs: object) -> None:
     # Device settings
-    if params.dev_num is None:
+    if Configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
-        dev = torch.device(f"cuda:{params.dev_num}")
+        dev = torch.device(f"cuda:{Configs.dev_num}")
         torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
 
     # Load model
-    print(f"Resume: {params.resume}")
-    model = params.model
-    opt = optim.SGD(model.parameters(), lr=params.lr, momentum=0.9)
+    print(f"Resume: {Configs.resume}")
+    model = Configs.model
+    opt = optim.SGD(model.parameters(), lr=Configs.lr, momentum=0.9)
     scheduler = optim.lr_scheduler.ExponentialLR(opt, gamma=0.9, last_epoch=-1)
-    if params.resume:
-        start_epoch, model, opt, scheduler, max_acc = load_cp(model, opt, scheduler, params.model_path, params.resume_model_name, dev)
+    if Configs.resume:
+        start_epoch, model, opt, scheduler, max_acc = load_cp(model, opt, scheduler, Configs.model_path, Configs.resume_model_name, dev)
     else:
         start_epoch = 0
         max_acc = 0
@@ -198,91 +202,70 @@ def prepare(params: object) -> object:
     print(f"Optimizer:\n{opt}")
 
     # Load data
-    train_dl, valid_dl = load_data(params.data_path, transform, params.bs, params.transform_img_size_x, params.transform_img_size_y, dev, params.num_workers, params.ds_mean, params.ds_std)
+    train_dl, valid_dl = load_data(Configs.data_path, transform, Configs.bs, Configs.transform_img_size_x, Configs.transform_img_size_y, dev, Configs.num_workers, Configs.ds_mean, Configs.ds_std)
 
     # Create model_path folder
-    if not os.path.exists(params.model_path):
-        os.makedirs(params.model_path)
-    assert os.path.exists(params.model_path)
+    if not os.path.exists(Configs.model_path):
+        os.makedirs(Configs.model_path)
+    assert os.path.exists(Configs.model_path)
 
     # For Tensorboard
     # Writer will output to ./runs/ directory by default
     writer = SummaryWriter(flush_secs=30)
 
-    # TODO: Use a better way to do this
-    class Model_Params:
-        def __init__(self):
-            self.model = model
-            self.num_epochs = params.num_epochs
-            self.start_epoch = start_epoch
-            self.loss_func = loss_func
-            self.opt = opt
-            self.scheduler = scheduler
-            self.train_dl = train_dl
-            self.valid_dl = valid_dl
-            self.max_acc = max_acc
-            self.target_acc = params.target_acc
-            self.verbose = params.verbose
-            self.model_path = params.model_path
-            self.writer = writer
-
-    # class Model_Params:
-    #     model
-    #     params.num_epochs
-    #     start_epoch = start_epoch
-    #     loss_func
-    #     opt
-    #     scheduler
-    #     train_dl
-    #     valid_dl
-    #     max_acc
-    #     params.target_acc
-    #     params.verbose
-    #     params.model_path
-    #     writer
-
-    return Model_Params()
+    # Load the params
+    Params.model = model
+    Params.num_epochs = Configs.num_epochs
+    Params.start_epoch = start_epoch
+    Params.loss_func = loss_func
+    Params.opt = opt
+    Params.scheduler = scheduler
+    Params.train_dl = train_dl
+    Params.valid_dl = valid_dl
+    Params.max_acc = max_acc
+    Params.target_acc = Configs.target_acc
+    Params.verbose = Configs.verbose
+    Params.model_path = Configs.model_path
+    Params.writer = writer
 
 
-def train(params: object) -> None:
-    # Preparation jobs
-    model_params = prepare(params)
-
+def train() -> None:
     # Info header
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
 
-    for epoch in range(model_params.start_epoch, model_params.num_epochs):
+    # Start training epochs
+    for epoch in range(Params.start_epoch, Params.num_epochs):
         # Training mode
-        model_params.model.train()
+        Params.model.train()
         counter = 0
-        for xb, yb in model_params.train_dl:
-            loss_batch(model_params.model, model_params.loss_func, xb, yb, model_params.opt)
+        for xb, yb in Params.train_dl:
+            loss_batch(Params.model, Params.loss_func, xb, yb, Params.opt)
             # Epoch progress bar
-            if model_params.verbose[4]:
+            if Params.verbose[4]:
                 counter += 1
-                progress = round(100 * counter / len(model_params.train_dl), 2)
+                progress = round(100 * counter / len(Params.train_dl), 2)
                 print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
-        model_params.scheduler.step()
+        Params.scheduler.step()
 
         # Training info calculation
-        train_loss, valid_loss, train_acc, valid_acc = training_info(model_params, epoch)
+        train_loss, valid_loss, train_acc, valid_acc = training_info(Params, epoch)
         print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
 
         # Save models
-        if model_params.verbose[3]:
+        if Params.verbose[3]:
             # Save best record
-            if valid_acc > model_params.max_acc:
-                model_params.max_acc = valid_acc
-                save_cp(model_params, epoch, valid_acc, f"model_checkpoint_max_acc.pth.tar")
+            if valid_acc > Params.max_acc:
+                Params.max_acc = valid_acc
+                save_cp(Params, epoch, valid_acc, f"model_checkpoint_max_acc.pth.tar")
             # Save target model
-            if valid_acc > model_params.target_acc:
-                save_cp(model_params, epoch, valid_acc, f"target_acc_{epoch}.pth.tar")
+            if valid_acc > Params.target_acc:
+                save_cp(Params, epoch, valid_acc, f"target_acc_{epoch}.pth.tar")
                 print("Accuracy target reached, model saved. Training stopped.")
-                model_params.writer.close()
+                Params.writer.close()
                 return
 
         # Save checkpoint
-        save_cp(model_params, epoch, valid_acc, f"model_checkpoint_{epoch}.pth.tar")
+        save_cp(Params, epoch, valid_acc, f"model_checkpoint_{epoch}.pth.tar")
         print(f"Checkpoint of epoch={epoch} saved.")
 
 
@@ -302,6 +285,7 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
-    config = importlib.import_module(config_path_process(config_path))
+    configs = importlib.import_module(config_path_process(config_path))
 
-    train(config.Params())
+    prepare(configs.Configs)
+    train()
