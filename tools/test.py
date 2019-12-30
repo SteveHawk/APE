@@ -20,27 +20,27 @@ def load_cp(model_path, name, dev):
     return model
 
 
-def test(params):
+def test(Configs: object) -> None:
     # Device settings
-    if params.dev_num is None:
+    if Configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
-        dev = torch.device(f"cuda:{params.dev_num}")
+        dev = torch.device(f"cuda:{Configs.dev_num}")
         torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
 
     # Model loading
-    model = load_cp(params.model_path, params.test_model_name, dev).to(dev)
+    model = load_cp(Configs.model_path, Configs.test_model_name, dev).to(dev)
     print(model)
     print("Model Loading Done.")
     
     # Data loading
-    test_ds = ImageFolder(params.test_data_path, transform=transform(params.transform_img_size_x, params.transform_img_size_y, params.ds_mean, params.ds_std))
+    test_ds = ImageFolder(Configs.test_data_path, transform=transform(Configs.transform_img_size_x, Configs.transform_img_size_y, Configs.ds_mean, Configs.ds_std))
     print("ImageFolder Done.")
     print(test_ds.class_to_idx)
-    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=params.bs, num_workers=params.num_workers), preprocess(params.transform_img_size_x, params.transform_img_size_y, dev))
+    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=Configs.bs, num_workers=Configs.num_workers), preprocess(Configs.transform_img_size_x, Configs.transform_img_size_y, dev))
     print("DataLoader Done.")
     
     model.eval()
@@ -80,6 +80,6 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
-    config = importlib.import_module(config_path_process(config_path))
+    configs = importlib.import_module(config_path_process(config_path))
 
-    test(config.Params())
+    test(configs.Configs)
