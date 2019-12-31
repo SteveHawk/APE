@@ -1,11 +1,13 @@
 import torch
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
+
 import os
-from time import time
-from tools.train import View, WrappedDataLoader, transform, preprocess, config_path
 import argparse
 import importlib
+from time import time
+
+from tools.train import View, WrappedDataLoader, transform, preprocess, config_path
 
 
 def load_cp(model_path, name, dev):
@@ -80,6 +82,9 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
+
+    import sys
+    sys.path.insert(1, os.path.join(sys.path[0], ".."))
     configs = importlib.import_module(config_path_process(config_path))
 
     test(configs.Configs)

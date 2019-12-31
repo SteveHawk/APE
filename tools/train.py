@@ -1,17 +1,18 @@
 import torch
 from torch import nn
 from torch import optim
-from torch.utils.data import DataLoader, random_split
-from torch.utils.tensorboard import SummaryWriter
-from torchvision.utils import make_grid
 import torch.nn.functional as F
-from torchvision.datasets import ImageFolder
 from torchvision import transforms
-from PIL import Image
+from torchvision.utils import make_grid
+from torchvision.datasets import ImageFolder
+from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader, random_split
+
 import os
-import numpy as np
 import argparse
 import importlib
+import numpy as np
+from PIL import Image
 from typing import Tuple
 
 
@@ -285,6 +286,9 @@ if __name__ == "__main__":
 
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
+
+    import sys
+    sys.path.insert(1, os.path.join(sys.path[0], ".."))
     configs = importlib.import_module(config_path_process(config_path))
 
     prepare(configs.Configs)
