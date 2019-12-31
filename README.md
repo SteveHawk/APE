@@ -1,16 +1,16 @@
 # APE
 
-APE is **A** sim**P**le image classification fram**E**work for quick and easy training/validation/deployment.
+APE is **A** sim**P**le image classification fram**E**work for quick and easy training/evaluation/deployment.
 
-## Training Codes
+## File structure
 
 Training codes are in `tools` folder.
 
-`train.py` is for training, `test.py` is for testing accuracy using test dataset, `predict.py` is for predicting the label of some images.
+`train.py` is for training, `test.py` is for testing accuracy using test dataset, `predict.py` is for predicting the label of given images.
 
-## How to run
+Configuration files are in `configs` folder. Configs are python files.
 
-Environment prerequisites:
+## Requirements
 
 ```requirements
 Python>=3.6
@@ -18,10 +18,34 @@ Pytorch>=1.1.0
 Tensorboard==1.14.0 (better with tensorflow installed, but not required)
 ```
 
-Before running, you should set the `PYTHONPATH` environment variable to the root of this project folder. Use `$env:PYTHONPATH="."` in PowerShell, or `export PYTHONPATH=$PYTHONPATH:.` in Bash.
+## Quick start
+
+### Dataset
+
+Datasets are loaded using [torchvision.datasets.ImageFolder](https://pytorch.org/docs/stable/torchvision/datasets.html#imagefolder). Simply arrange your dataset by categories, in this way:
+
+```directories
+$DATASET_PATH/dog/xxx.png
+$DATASET_PATH/dog/xxy.png
+$DATASET_PATH/dog/xxz.png
+
+$DATASET_PATH/cat/123.png
+$DATASET_PATH/cat/nsdf3.png
+$DATASET_PATH/cat/asd932_.png
+```
+
+And it will be loaded automatically.
+
+### Training
 
 To train the model, first define a model config, `configs/model.py` for example. Then run `python -u tools/train.py --config configs/model.py`.
 
-You can also resume training using the model checkpoint, just set `resume = True` and set the model dir/name.
+You can also resume a training process using a model checkpoint. Set `resume = True` and set the checkpoint path in the config, and it will be resumed from the checkpoint.
 
-To test the model using test set, run `python -u tools/test.py --config <YOUR-CONFIG-LOCATION>`.
+### Evaluation
+
+To test the model using test dataset, run `python -u tools/test.py --config <YOUR-CONFIG-LOCATION>`.
+
+### Inference
+
+You can use `predict.py` to deploy the trained model.
