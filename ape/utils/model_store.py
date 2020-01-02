@@ -6,7 +6,7 @@ from typing import Tuple
 def save_cp(Params: object, acc: float, name: str) -> None:
     checkpoint = {
         "epoch": Params.epoch,
-        "model": Params.model,
+        "model": Params.model.state_dict(),
         "optimizer": Params.opt.state_dict(),
         "scheduler": Params.scheduler.state_dict(),
         "acc": acc,
@@ -23,7 +23,7 @@ def load_cp(model: object, opt: object, scheduler: object, model_path: str, name
     checkpoint = torch.load(path, map_location=dev)
 
     start_epoch = checkpoint["epoch"] + 1
-    model = checkpoint["model"]
+    model.load_state_dict(checkpoint["model"])
     opt.load_state_dict(checkpoint["optimizer"])
     scheduler.load_state_dict(checkpoint["scheduler"])
     acc = checkpoint["acc"]
