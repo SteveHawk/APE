@@ -1,9 +1,10 @@
 import torch
-import numpy as np
+import numpy as np  # type: ignore
+from .load_data import WrappedDataLoader
 from typing import Tuple, Union
 
 
-def cal_loss(Params: object, dl: object, verbose: bool, catagory: str) -> Union[float, str]:
+def cal_loss(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
     Params.model.eval()
     if verbose:
         with torch.no_grad():
@@ -12,12 +13,12 @@ def cal_loss(Params: object, dl: object, verbose: bool, catagory: str) -> Union[
             )
         loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
         Params.writer.add_scalar(catagory, loss, Params.epoch)
+        return loss
     else:
-        loss = "off"
-    return loss
+        return "off"
 
 
-def cal_acc(Params: object, dl: object, verbose: bool, catagory: str) -> Union[float, str]:
+def cal_acc(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
     Params.model.eval()
     if verbose:
         correct = 0
@@ -28,15 +29,16 @@ def cal_acc(Params: object, dl: object, verbose: bool, catagory: str) -> Union[f
                 outputs = Params.model(images)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+                correct += int((predicted == labels).sum().item())
         acc = 100 * correct / total
         Params.writer.add_scalar(catagory, acc, Params.epoch)
+        return acc
     else:
-        acc = "off"
-    return acc
+        return "off"
 
 
-def training_info(Params: object) -> Tuple[float]:
+def training_info(Params: Params) -> Tuple[Union[float, str], Union[float, str],
+                                            Union[float, str], Union[float, str]]:
     train_dl = Params.train_dl
     valid_dl = Params.valid_dl
     verbose = Params.verbose

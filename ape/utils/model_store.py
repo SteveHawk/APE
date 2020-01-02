@@ -3,7 +3,7 @@ import torch
 from typing import Tuple
 
 
-def save_cp(Params: object, acc: float, name: str) -> None:
+def save_cp(Params: Params, acc: float, name: str) -> None:
     checkpoint = {
         "epoch": Params.epoch,
         "model": Params.model.state_dict(),
@@ -16,8 +16,9 @@ def save_cp(Params: object, acc: float, name: str) -> None:
     torch.save(checkpoint, path)
 
 
-def load_cp(model: object, opt: object, scheduler: object, model_path: str, name: str, dev: object) \
-                                                    -> Tuple[int, object, object, object, float]:
+def load_cp(model: torch.nn.Sequential, opt: torch.optim.SGD, scheduler: torch.optim.lr_scheduler.ExponentialLR,
+                            model_path: str, name: str, dev: torch.device) -> Tuple[int, torch.nn.Sequential,
+                            torch.optim.SGD, torch.optim.lr_scheduler.ExponentialLR, float]:
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)

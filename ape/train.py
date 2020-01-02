@@ -6,16 +6,29 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 import argparse
 import importlib
-from typing import Tuple, Optional
+from typing import Tuple, List, Callable
 
 from utils import info_cal, load_data, model_store
 
 
 class Params:
-    pass
+    model: torch.nn.Sequential
+    num_epochs: int
+    start_epoch: int
+    loss_func: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
+    opt: optim.SGD
+    scheduler: optim.lr_scheduler.ExponentialLR
+    train_dl: load_data.WrappedDataLoader
+    valid_dl: load_data.WrappedDataLoader
+    max_acc: float
+    target_acc: float
+    verbose: List[bool]
+    model_path: str
+    writer: SummaryWriter
+    epoch: int
 
 
-def save_model(valid_acc: float) -> Optional[bool]:
+def save_model(valid_acc: float) -> bool:
     # Save models
     if Params.verbose[3]:
         # Save best record
@@ -32,16 +45,15 @@ def save_model(valid_acc: float) -> Optional[bool]:
     # Save checkpoint
     model_store.save_cp(Params, valid_acc, f"model_checkpoint_{Params.epoch}.pth.tar")
     print(f"Checkpoint of epoch={Params.epoch} saved.")
+    return False
 
 
-def loss_batch(xb: object, yb: object) -> Tuple[object, int]:
+def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
     loss = Params.loss_func(Params.model(xb), yb)
 
     loss.backward()
     Params.opt.step()
     Params.opt.zero_grad()
-
-    return loss.item(), len(xb)
 
 
 def train() -> None:
@@ -69,11 +81,11 @@ def train() -> None:
         train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info(Params)
         print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
 
-        if save_model(valid_acc):
+        if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
             return
 
 
-def prepare(Configs: object) -> None:
+def prepare(Configs: configs.Configs) -> None:
     # Device settings
     if Configs.dev_num is None:
         dev = torch.device("cpu")

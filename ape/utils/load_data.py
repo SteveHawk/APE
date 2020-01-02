@@ -1,27 +1,29 @@
-from torchvision import transforms
-from torchvision.datasets import ImageFolder
+import torch
+from torchvision import transforms  # type: ignore
+from torchvision.datasets import ImageFolder  # type: ignore
 from torch.utils.data import DataLoader, random_split
-from PIL import Image
-from typing import Tuple, List, Callable
+from PIL import Image  # type: ignore
+from typing import Tuple, List, Callable, Iterator
 
 
 class WrappedDataLoader:
-    def __init__(self, dl: DataLoader, func: Callable[[int, int, float, float], object]) -> None:
+    def __init__(self, dl: DataLoader, func: Callable[[torch.Tensor, torch.Tensor],
+                                        Tuple[torch.Tensor, torch.Tensor]]) -> None:
         self.dl = dl
         self.func = func
 
     def __len__(self) -> int:
         return len(self.dl)
 
-    def __iter__(self) -> object:
+    def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
         batches = iter(self.dl)
         for b in batches:
             yield (self.func(*b))
 
 
 def transform(img_size_x: int, img_size_y: int, ds_mean: List[float], ds_std: List[float],
-                                        gray_scale: bool) -> Callable[[object], object]:
-    def _transform(img: object) -> object:
+                                        gray_scale: bool) -> Callable[[Image.Image], torch.Tensor]:
+    def _transform(img: Image.Image) -> torch.Tensor:
         if gray_scale:
             img = img.convert("L")
         size = img.size
@@ -36,14 +38,14 @@ def transform(img_size_x: int, img_size_y: int, ds_mean: List[float], ds_std: Li
     return _transform
 
 
-def preprocess(img_size_x: int, img_size_y: int, dev: object, gray_scale: bool) \
-                            -> Callable[[object, object], Tuple[object, object]]:
-    def _preprocess(x: object, y: object) -> Tuple[object, object]:
+def preprocess(img_size_x: int, img_size_y: int, dev: torch.device, gray_scale: bool) \
+            -> Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
+    def _preprocess(x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         return x.view(-1, 1 if gray_scale else 3, img_size_x, img_size_y).to(dev), y.to(dev)
     return _preprocess
 
 
-def load_data(Configs: object, dev: object) -> Tuple[WrappedDataLoader]:
+def load_data(Configs: Configs, dev: torch.device) -> Tuple[WrappedDataLoader, WrappedDataLoader]:
     full_ds = ImageFolder(Configs.data_path, transform=transform(Configs.img_size_x, Configs.img_size_y,
         Configs.ds_mean, Configs.ds_std, Configs.gray_scale))
     print("ImageFolder done.")
@@ -54,13 +56,13 @@ def load_data(Configs: object, dev: object) -> Tuple[WrappedDataLoader]:
     train_ds, valid_ds = random_split(full_ds, [train_size, valid_size])
     print("Dataset 8/2 random split done.")
 
-    train_dl = DataLoader(train_ds, batch_size=Configs.bs, shuffle=True, num_workers=Configs.num_workers)
-    valid_dl = DataLoader(valid_ds, batch_size=Configs.bs, num_workers=Configs.num_workers)
+    _train_dl = DataLoader(train_ds, batch_size=Configs.bs, shuffle=True, num_workers=Configs.num_workers)
+    _valid_dl = DataLoader(valid_ds, batch_size=Configs.bs, num_workers=Configs.num_workers)
     print("DataLoader done.")
 
-    train_dl = WrappedDataLoader(train_dl, preprocess(Configs.img_size_x, Configs.img_size_y,
+    train_dl = WrappedDataLoader(_train_dl, preprocess(Configs.img_size_x, Configs.img_size_y,
         dev, Configs.gray_scale))
-    valid_dl = WrappedDataLoader(valid_dl, preprocess(Configs.img_size_x, Configs.img_size_y,
+    valid_dl = WrappedDataLoader(_valid_dl, preprocess(Configs.img_size_x, Configs.img_size_y,
         dev, Configs.gray_scale))
     print("WrappedDataLoader done.")
 
