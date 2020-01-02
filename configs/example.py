@@ -2,7 +2,7 @@ from torch import nn
 from ape.utils.view import View
 
 
-class Params:
+class Configs:
     # Number of classes
     num_classes = 2
 
@@ -59,8 +59,8 @@ class Params:
     ds_std = 0.5
 
     # What size should pics be preprocessed
-    transform_img_size_x = 256
-    transform_img_size_y = 256
+    img_size_x = 256
+    img_size_y = 256
 
     # If resume training
     resume = False

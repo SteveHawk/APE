@@ -91,7 +91,7 @@ def prepare(Configs: object) -> None:
     scheduler = optim.lr_scheduler.ExponentialLR(opt, gamma=0.9, last_epoch=-1)
     if Configs.resume:
         start_epoch, model, opt, scheduler, max_acc = model_store.load_cp(model, opt, scheduler,
-        Configs.model_path, Configs.resume_model_name, dev)
+            Configs.model_path, Configs.resume_model_name, dev)
     else:
         start_epoch = 0
         max_acc = 0
@@ -103,8 +103,7 @@ def prepare(Configs: object) -> None:
     print(f"Optimizer:\n{opt}")
 
     # Load data
-    train_dl, valid_dl = load_data.load_data(Configs.data_path, Configs.bs, Configs.transform_img_size_x,
-    Configs.transform_img_size_y, dev, Configs.num_workers, Configs.ds_mean, Configs.ds_std)
+    train_dl, valid_dl = load_data.load_data(Configs, dev)
 
     # Create model_path folder
     if not os.path.exists(Configs.model_path):
