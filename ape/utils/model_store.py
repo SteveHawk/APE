@@ -1,7 +1,9 @@
+import os
+import torch
 from typing import Tuple
 
 
-def save_cp(acc: float, name: str) -> None:
+def save_cp(Params: object, acc: float, name: str) -> None:
     checkpoint = {
         "epoch": Params.epoch,
         "model": Params.model,

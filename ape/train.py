@@ -6,7 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 import argparse
 import importlib
-from typing import Tuple, Union
+from typing import Tuple, Optional
 
 from utils import info_cal, load_data, model_store
 
@@ -15,7 +15,26 @@ class Params:
     pass
 
 
-def loss_batch(Params: object, xb: object, yb: object) -> Tuple[object, int]:
+def save_model(valid_acc: float) -> Optional[bool]:
+    # Save models
+    if Params.verbose[3]:
+        # Save best record
+        if valid_acc > Params.max_acc:
+            Params.max_acc = valid_acc
+            model_store.save_cp(Params, valid_acc, f"model_checkpoint_max_acc.pth.tar")
+        # Save target model
+        if valid_acc > Params.target_acc:
+            model_store.save_cp(Params, valid_acc, f"target_acc_{Params.epoch}.pth.tar")
+            print("Accuracy target reached, model saved. Training stopped.")
+            Params.writer.close()
+            return True
+
+    # Save checkpoint
+    model_store.save_cp(Params, valid_acc, f"model_checkpoint_{Params.epoch}.pth.tar")
+    print(f"Checkpoint of epoch={Params.epoch} saved.")
+
+
+def loss_batch(xb: object, yb: object) -> Tuple[object, int]:
     loss = Params.loss_func(Params.model(xb), yb)
 
     loss.backward()
@@ -38,7 +57,7 @@ def train() -> None:
         Params.model.train()
         counter = 0
         for xb, yb in Params.train_dl:
-            loss_batch(Params, xb, yb)
+            loss_batch(xb, yb)
             # Epoch progress bar
             if Params.verbose[4]:
                 counter += 1
@@ -50,22 +69,8 @@ def train() -> None:
         train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info(Params)
         print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
 
-        # Save models
-        if Params.verbose[3]:
-            # Save best record
-            if valid_acc > Params.max_acc:
-                Params.max_acc = valid_acc
-                model_store.save_cp(valid_acc, f"model_checkpoint_max_acc.pth.tar")
-            # Save target model
-            if valid_acc > Params.target_acc:
-                model_store.save_cp(valid_acc, f"target_acc_{epoch}.pth.tar")
-                print("Accuracy target reached, model saved. Training stopped.")
-                Params.writer.close()
-                return
-
-        # Save checkpoint
-        model_store.save_cp(valid_acc, f"model_checkpoint_{epoch}.pth.tar")
-        print(f"Checkpoint of epoch={epoch} saved.")
+        if save_model(valid_acc):
+            return
 
 
 def prepare(Configs: object) -> None:
