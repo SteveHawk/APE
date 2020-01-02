@@ -15,6 +15,16 @@ class Params:
     pass
 
 
+def loss_batch(Params: object, xb: object, yb: object) -> Tuple[object, int]:
+    loss = Params.loss_func(Params.model(xb), yb)
+
+    loss.backward()
+    Params.opt.step()
+    Params.opt.zero_grad()
+
+    return loss.item(), len(xb)
+
+
 def train() -> None:
     # Info header
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
@@ -28,7 +38,7 @@ def train() -> None:
         Params.model.train()
         counter = 0
         for xb, yb in Params.train_dl:
-            info_cal.loss_batch(Params.model, Params.loss_func, xb, yb, Params.opt)
+            loss_batch(Params, xb, yb)
             # Epoch progress bar
             if Params.verbose[4]:
                 counter += 1

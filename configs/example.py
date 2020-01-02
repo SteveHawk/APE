@@ -1,5 +1,5 @@
 from torch import nn
-from tools.train import View
+from ape.utils.view import View
 
 
 class Params:

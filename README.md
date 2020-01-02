@@ -4,7 +4,7 @@ APE is **A** sim**P**le image classification fram**E**work for quick and easy tr
 
 ## File structure
 
-Training codes are in `tools` folder.
+Codes are in the `ape` folder.
 
 `train.py` is for training, `test.py` is for testing accuracy using test dataset, `predict.py` is for predicting the label of given images.
 
@@ -36,13 +36,13 @@ And it will be loaded automatically.
 
 ### Training
 
-To train the model, first define a model config, `configs/model.py` for example. Then run `python -u tools/train.py --config configs/model.py`.
+To train the model, first define a model config, `configs/model.py` for example. Then run `python -u ape/train.py --config configs/model.py`.
 
 You can also resume a training process using a model checkpoint. Set `resume = True` and set the checkpoint path in the config, and it will be resumed from the checkpoint.
 
 ### Evaluation
 
-To test the model using test dataset, run `python -u tools/test.py --config <YOUR-CONFIG-LOCATION>`.
+To test the model using test dataset, run `python -u ape/test.py --config <YOUR-CONFIG-LOCATION>`.
 
 ### Inference
 

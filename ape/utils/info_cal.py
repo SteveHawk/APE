@@ -3,23 +3,12 @@ import numpy as np
 from typing import Tuple, Union
 
 
-def loss_batch(model, loss_func, xb, yb, opt=None):
-    loss = loss_func(model(xb), yb)
-
-    if opt is not None:
-        loss.backward()
-        opt.step()
-        opt.zero_grad()
-
-    return loss.item(), len(xb)
-
-
 def cal_loss(Params: object, dl: object, verbose: bool, catagory: str) -> Union[float, str]:
     Params.model.eval()
     if verbose:
         with torch.no_grad():
             losses, nums = zip(
-                *[loss_batch(Params.model, Params.loss_func, xb, yb) for xb, yb in dl]
+                *[(Params.loss_func(Params.model(xb), yb).item(), len(xb)) for xb, yb in dl]
             )
         loss = np.sum(np.multiply(losses, nums)) / np.sum(nums)
         Params.writer.add_scalar(catagory, loss, Params.epoch)
