@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
+from torchvision.datasets import ImageFolder  # type: ignore
 
 import os
 import argparse
@@ -10,19 +10,20 @@ from time import time
 import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from ape.utils.params import Params
 from ape.utils.load_data import WrappedDataLoader, preprocess, transform
-from ape.utils import info_cal, model_store
 
 
-def load_cp(model_path, name, dev):
+def load_cp(model: torch.nn.Sequential, model_path: str, name: str, dev: torch.device) -> torch.nn.Sequential:
     path = os.path.join(model_path, name)
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)
+
+    model.load_state_dict(checkpoint["model"])
+    model.to(dev)
     epoch = checkpoint["epoch"]
-    model = checkpoint["model"]
     acc = checkpoint["acc"]
     max_acc = checkpoint["max_acc"]
+
     print(f"Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
     return model
 
@@ -39,15 +40,16 @@ def test() -> None:
     print(f"Device: {dev}")
 
     # Model loading
-    model = load_cp(Configs.model_path, Configs.test_model_name, dev).to(dev)
+    model = load_cp(Configs.model, Configs.model_path, Configs.test_model_name, dev)
     print(model)
     print("Model Loading Done.")
     
     # Data loading
-    test_ds = ImageFolder(Configs.test_data_path, transform=transform(Configs.transform_img_size_x, Configs.transform_img_size_y, Configs.ds_mean, Configs.ds_std))
+    test_ds = ImageFolder(Configs.test_data_path, transform=transform(Configs.img_size_x, Configs.img_size_y,
+        Configs.ds_mean, Configs.ds_std, Configs.gray_scale))
     print("ImageFolder Done.")
     print(test_ds.class_to_idx)
-    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=Configs.bs, num_workers=Configs.num_workers), preprocess(Configs.transform_img_size_x, Configs.transform_img_size_y, dev))
+    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=Configs.bs, num_workers=Configs.num_workers), preprocess(Configs.img_size_x, Configs.img_size_y, dev, Configs.gray_scale))
     print("DataLoader Done.")
     
     model.eval()
