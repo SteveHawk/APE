@@ -1,29 +1,33 @@
 import torch
+from torch import Tensor
 from torchvision import transforms  # type: ignore
 from torchvision.datasets import ImageFolder  # type: ignore
 from torch.utils.data import DataLoader, random_split
+
 from PIL import Image  # type: ignore
 from typing import Tuple, List, Callable, Iterator
 
+from .configs import Configs
+
 
 class WrappedDataLoader:
-    def __init__(self, dl: DataLoader, func: Callable[[torch.Tensor, torch.Tensor],
-                                        Tuple[torch.Tensor, torch.Tensor]]) -> None:
+    def __init__(self, dl: DataLoader, func: Callable[[Tensor, Tensor],
+                                        Tuple[Tensor, Tensor]]) -> None:
         self.dl = dl
         self.func = func
 
     def __len__(self) -> int:
         return len(self.dl)
 
-    def __iter__(self) -> Iterator[Tuple[torch.Tensor, torch.Tensor]]:
+    def __iter__(self) -> Iterator[Tuple[Tensor, Tensor]]:
         batches = iter(self.dl)
         for b in batches:
             yield (self.func(*b))
 
 
 def transform(img_size_x: int, img_size_y: int, ds_mean: List[float], ds_std: List[float],
-                                        gray_scale: bool) -> Callable[[Image.Image], torch.Tensor]:
-    def _transform(img: Image.Image) -> torch.Tensor:
+                                        gray_scale: bool) -> Callable[[Image.Image], Tensor]:
+    def _transform(img: Image.Image) -> Tensor:
         if gray_scale:
             img = img.convert("L")
         size = img.size
@@ -39,8 +43,8 @@ def transform(img_size_x: int, img_size_y: int, ds_mean: List[float], ds_std: Li
 
 
 def preprocess(img_size_x: int, img_size_y: int, dev: torch.device, gray_scale: bool) \
-            -> Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
-    def _preprocess(x: torch.Tensor, y: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                                -> Callable[[Tensor, Tensor], Tuple[Tensor, Tensor]]:
+    def _preprocess(x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         return x.view(-1, 1 if gray_scale else 3, img_size_x, img_size_y).to(dev), y.to(dev)
     return _preprocess
 

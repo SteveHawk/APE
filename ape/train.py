@@ -8,24 +8,8 @@ import argparse
 import importlib
 from typing import Tuple, List, Callable
 
+from utils.params import Params
 from utils import info_cal, load_data, model_store
-
-
-class Params:
-    model: torch.nn.Sequential
-    num_epochs: int
-    start_epoch: int
-    loss_func: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
-    opt: optim.SGD
-    scheduler: optim.lr_scheduler.ExponentialLR
-    train_dl: load_data.WrappedDataLoader
-    valid_dl: load_data.WrappedDataLoader
-    max_acc: float
-    target_acc: float
-    verbose: List[bool]
-    model_path: str
-    writer: SummaryWriter
-    epoch: int
 
 
 def save_model(valid_acc: float) -> bool:
@@ -34,16 +18,16 @@ def save_model(valid_acc: float) -> bool:
         # Save best record
         if valid_acc > Params.max_acc:
             Params.max_acc = valid_acc
-            model_store.save_cp(Params, valid_acc, f"model_checkpoint_max_acc.pth.tar")
+            model_store.save_cp(valid_acc, f"model_checkpoint_max_acc.pth.tar")
         # Save target model
         if valid_acc > Params.target_acc:
-            model_store.save_cp(Params, valid_acc, f"target_acc_{Params.epoch}.pth.tar")
+            model_store.save_cp(valid_acc, f"target_acc_{Params.epoch}.pth.tar")
             print("Accuracy target reached, model saved. Training stopped.")
             Params.writer.close()
             return True
 
     # Save checkpoint
-    model_store.save_cp(Params, valid_acc, f"model_checkpoint_{Params.epoch}.pth.tar")
+    model_store.save_cp(valid_acc, f"model_checkpoint_{Params.epoch}.pth.tar")
     print(f"Checkpoint of epoch={Params.epoch} saved.")
     return False
 
@@ -78,14 +62,14 @@ def train() -> None:
         Params.scheduler.step()
 
         # Training info calculation
-        train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info(Params)
+        train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
         print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
 
         if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
             return
 
 
-def prepare(Configs: configs.Configs) -> None:
+def prepare() -> None:
     # Device settings
     if Configs.dev_num is None:
         dev = torch.device("cpu")
@@ -161,7 +145,7 @@ if __name__ == "__main__":
 
     import sys
     sys.path.insert(1, os.path.join(sys.path[0], ".."))
-    configs = importlib.import_module(config_path_process(config_path))
+    Configs = importlib.import_module(config_path_process(config_path)).Configs
 
-    prepare(configs.Configs)
+    prepare()
     train()

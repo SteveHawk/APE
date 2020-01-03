@@ -1,10 +1,12 @@
 import torch
 import numpy as np  # type: ignore
-from .load_data import WrappedDataLoader
 from typing import Tuple, Union
 
+from .params import Params
+from .load_data import WrappedDataLoader
 
-def cal_loss(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
+
+def cal_loss(dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
     Params.model.eval()
     if verbose:
         with torch.no_grad():
@@ -18,7 +20,7 @@ def cal_loss(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str
         return "off"
 
 
-def cal_acc(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
+def cal_acc(dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:
     Params.model.eval()
     if verbose:
         correct = 0
@@ -37,15 +39,15 @@ def cal_acc(Params: Params, dl: WrappedDataLoader, verbose: bool, catagory: str)
         return "off"
 
 
-def training_info(Params: Params) -> Tuple[Union[float, str], Union[float, str],
-                                            Union[float, str], Union[float, str]]:
+def training_info() -> Tuple[Union[float, str], Union[float, str],
+                            Union[float, str], Union[float, str]]:
     train_dl = Params.train_dl
     valid_dl = Params.valid_dl
     verbose = Params.verbose
 
-    train_loss = cal_loss(Params, train_dl, verbose[0], "Loss/train")
-    valid_loss = cal_loss(Params, valid_dl, verbose[1], "Loss/validation")
-    train_acc = cal_acc(Params, train_dl, verbose[2], "Accuracy/train")
-    valid_acc = cal_acc(Params, valid_dl, verbose[3], "Accuracy/validation")
+    train_loss = cal_loss(train_dl, verbose[0], "Loss/train")
+    valid_loss = cal_loss(valid_dl, verbose[1], "Loss/validation")
+    train_acc = cal_acc(train_dl, verbose[2], "Accuracy/train")
+    valid_acc = cal_acc(valid_dl, verbose[3], "Accuracy/validation")
 
     return train_loss, valid_loss, train_acc, valid_acc
