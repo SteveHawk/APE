@@ -2,8 +2,8 @@ import torch
 import numpy as np  # type: ignore
 from typing import Tuple, Union
 
-from .params import Params
-from .load_data import WrappedDataLoader
+from ape.utils.params import Params
+from ape.utils.load_data import WrappedDataLoader
 
 
 def cal_loss(dl: WrappedDataLoader, verbose: bool, catagory: str) -> Union[float, str]:

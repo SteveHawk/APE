@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, random_split
 from PIL import Image  # type: ignore
 from typing import Tuple, List, Callable, Iterator
 
-from .configs import Configs
+from ape.utils.configs import Configs
 
 
 class WrappedDataLoader:

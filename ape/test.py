@@ -7,7 +7,12 @@ import argparse
 import importlib
 from time import time
 
-from tools.train import View, WrappedDataLoader, transform, preprocess, config_path
+import sys
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
+
+from ape.utils.params import Params
+from ape.utils.load_data import WrappedDataLoader, preprocess, transform
+from ape.utils import info_cal, model_store
 
 
 def load_cp(model_path, name, dev):
@@ -22,13 +27,13 @@ def load_cp(model_path, name, dev):
     return model
 
 
-def test(Configs: object) -> None:
+def test() -> None:
     # Device settings
     if Configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{Configs.dev_num}")
-        torch.backends.cudnn.benchmark = True
+        # torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
@@ -83,8 +88,6 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
 
-    import sys
-    sys.path.insert(1, os.path.join(sys.path[0], ".."))
-    configs = importlib.import_module(config_path_process(config_path))
+    Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    test(configs.Configs)
+    test()

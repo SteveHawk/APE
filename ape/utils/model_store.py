@@ -3,7 +3,7 @@ import torch
 from typing import Tuple
 from torch.optim import lr_scheduler, SGD
 
-from .params import Params
+from ape.utils.params import Params
 
 
 def save_cp(acc: float, name: str) -> None:

@@ -2,7 +2,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from typing import Callable, List
 
-from .load_data import WrappedDataLoader
+from ape.utils.load_data import WrappedDataLoader
 
 
 class Params:
