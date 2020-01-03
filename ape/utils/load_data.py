@@ -71,3 +71,19 @@ def load_data(Configs: Configs, dev: torch.device) -> Tuple[WrappedDataLoader, W
     print("WrappedDataLoader done.")
 
     return train_dl, valid_dl
+
+
+def preprocess_x(img: Image.Image, dev: torch.device, img_size_x: int, img_size_y: int,
+                ds_mean: List[float], ds_std: List[float], gray_scale: bool) -> Tensor:
+    if gray_scale:
+        img = img.convert("L")
+    size = img.size
+    img = img.resize((img_size_x, img_size_y), Image.ANTIALIAS)
+
+    transform_tensor = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=ds_mean, std=ds_std)
+        ]
+    )
+    tensor = transform_tensor(img)
+    return tensor.view(-1, 1 if gray_scale else 3, img_size_x, img_size_y).to(dev)

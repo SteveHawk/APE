@@ -10,23 +10,9 @@ from time import time
 import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
-from ape.utils.configs import Configs
+from ape.utils.model_store import load_model
+from ape.utils.configs import Configs, config_path_process
 from ape.utils.load_data import WrappedDataLoader, preprocess, transform
-
-
-def load_cp(model: torch.nn.Sequential, model_path: str, name: str, dev: torch.device) -> torch.nn.Sequential:
-    path = os.path.join(model_path, name)
-    assert os.path.isfile(path)
-    checkpoint = torch.load(path, map_location=dev)
-
-    model.load_state_dict(checkpoint["model"])
-    model.to(dev)
-    epoch = checkpoint["epoch"]
-    acc = checkpoint["acc"]
-    max_acc = checkpoint["max_acc"]
-
-    print(f"Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
-    return model
 
 
 def test(configs: Configs) -> None:
@@ -41,7 +27,7 @@ def test(configs: Configs) -> None:
     print(f"Device: {dev}")
 
     # Model loading
-    model = load_cp(configs.model, configs.model_path, configs.test_model_name, dev)
+    model = load_model(configs.model, configs.model_path, configs.test_model_name, dev)
     print(model)
     print("Model Loading Done.")
 
@@ -72,15 +58,6 @@ def test(configs: Configs) -> None:
 
     print(f"Total: {total}, Correct: {correct}")
     print(f"Test Set Accuracy: {test_acc}%.")
-
-
-def config_path_process(path: str) -> str:
-    path = path.lstrip("./\\")
-    path = path.rstrip("py")
-    path = path.rstrip(".")
-    path = path.replace("/", ".")
-    path = path.replace("\\", ".")
-    return path
 
 
 if __name__ == "__main__":

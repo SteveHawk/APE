@@ -1,97 +1,61 @@
 import torch
 from torch import nn
-from torchvision import transforms
 
 import os
 import glob
 import argparse
 import importlib
 from PIL import Image
+from typing import List, Tuple
 
-from ape.utils.configs import Configs
-
-
-def preprocess(img, dev, transform_img_size_x, transform_img_size_y):
-    img = img.convert("L")
-    size = img.size
-    if size[0] > size[1]:
-        img = img.rotate(90)
-    img = img.resize((transform_img_size_y, transform_img_size_x), Image.ANTIALIAS)
-
-    transform_tensor = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean = [1], std = [0.5])
-        ]
-    )
-    tensor = transform_tensor(img)
-    return tensor.view(-1, 1, transform_img_size_x, transform_img_size_y).to(dev)
+from ape.utils.model_store import load_model
+from ape.utils.load_data import preprocess_x
+from ape.utils.configs import Configs, config_path_process
 
 
-def load_cp(model_path, name, dev):
-    path = os.path.join(model_path, name)
-    assert os.path.isfile(path)
-    checkpoint = torch.load(path, map_location=dev)
-    epoch = checkpoint["epoch"]
-    model = checkpoint["model"]
-    acc = checkpoint["acc"]
-    max_acc = checkpoint["max_acc"]
-    print(f"Loading checkpoint of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
-    return model
+def predict(images: List[Image], model: nn.Sequential) -> List[Tuple[float, ...]]:
+    labels: List[Tuple[float, ...]] = list()
+    with torch.no_grad():
+        for img in images:
+            outputs = model(img)
+
+            # # Return label index
+            # _, predicted = torch.max(outputs.data, 1)
+            # labels.append(predicted.item())
+
+            # Return possibilities
+            outputs = nn.functional.softmax(outputs, dim=1)
+            # TODO: Multi class
+            labels.append((outputs.data[0][0].item(), outputs.data[0][1].item()))
+
+    return labels
 
 
-def predict(images):
-    # Params
-    model_path = "./models/"
-    model_name = "target.pth.tar"
-    transform_img_size_x = 200
-    transform_img_size_y = 200
-    dev_num = None
-
+def solve(configs: Configs, img_path: str) -> None:
     # Device settings
-    if dev_num is None:
+    if configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
-        dev = torch.device(f"cuda:{dev_num}")
-        torch.backends.cudnn.benchmark = True
+        dev = torch.device(f"cuda:{configs.dev_num}")
+        # torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
 
     # Model loading
-    model = load_cp(model_path, model_name, dev).to(dev)
+    model = load_model(configs.model, configs.model_path, configs.prediction_model_name, dev)
     model.eval()
     print(model)
     print("Model Loading Done.")
 
-    labels = list()
-    with torch.no_grad():
-        for img in images:
-            outputs = model(preprocess(img, dev, transform_img_size_x, transform_img_size_y))
-            _, predicted = torch.max(outputs.data, 1)
-
-            # labels.append(predicted.item())   # Return label index
-
-            outputs = nn.functional.softmax(outputs, dim=1)
-            labels.append((outputs.data[0][0].item(), outputs.data[0][1].item()))   # Return possibilities
-
-    return labels
-
-
-def config_path_process(path: str) -> str:
-    path = path.lstrip("./\\")
-    path = path.rstrip("py")
-    path = path.rstrip(".")
-    path = path.replace("/", ".")
-    path = path.replace("\\", ".")
-    return path
-
-
-def solve(configs: Configs, img_path: str) -> None:
+    # Prediction
     imgs = list()
     for i in range(1, 11):
-        imgs.append(Image.open(f"./ds/img ({i}).png"))
+        img = Image.open(f"./ds/img ({i}).png")
+        imgs.append(preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
+            configs.ds_mean, configs.ds_std, configs.gray_scale))
 
-    result = predict(imgs)
+    result = predict(imgs, model)
 
     for i in range(1, 11):
         print(f"img ({i}).png  {result[i - 1]}")

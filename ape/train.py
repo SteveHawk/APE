@@ -12,7 +12,7 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 from ape.utils.params import Params
-from ape.utils.configs import Configs
+from ape.utils.configs import Configs, config_path_process
 from ape.utils import info_cal, load_data, model_store
 
 
@@ -128,15 +128,6 @@ def prepare(configs: Configs) -> None:
     Params.verbose = configs.verbose
     Params.model_path = configs.model_path
     Params.writer = writer
-
-
-def config_path_process(path: str) -> str:
-    path = path.lstrip("./\\")
-    path = path.rstrip("py")
-    path = path.rstrip(".")
-    path = path.replace("/", ".")
-    path = path.replace("\\", ".")
-    return path
 
 
 if __name__ == "__main__":

@@ -23,3 +23,13 @@ class Configs:
     num_workers: int
     test_data_path: str
     test_model_name: str
+    prediction_model_name: str
+
+
+def config_path_process(path: str) -> str:
+    path = path.lstrip("./\\")
+    path = path.rstrip("py")
+    path = path.rstrip(".")
+    path = path.replace("/", ".")
+    path = path.replace("\\", ".")
+    return path

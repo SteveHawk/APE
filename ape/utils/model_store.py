@@ -35,3 +35,18 @@ def load_cp(model: torch.nn.Sequential, opt: SGD, scheduler: lr_scheduler.Expone
 
     print(f"Loading checkpoint starting at epoch={start_epoch}, acc={acc}, max_acc={max_acc}.")
     return start_epoch, model, opt, scheduler, max_acc
+
+
+def load_model(model: torch.nn.Sequential, model_path: str, name: str, dev: torch.device) -> torch.nn.Sequential:
+    path = os.path.join(model_path, name)
+    assert os.path.isfile(path)
+    checkpoint = torch.load(path, map_location=dev)
+
+    model.load_state_dict(checkpoint["model"])
+    model.to(dev)
+    epoch = checkpoint["epoch"]
+    acc = checkpoint["acc"]
+    max_acc = checkpoint["max_acc"]
+
+    print(f"Loading model of epoch={epoch}, acc={acc}, max_acc={max_acc}.")
+    return model

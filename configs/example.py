@@ -82,3 +82,6 @@ Configs.test_data_path = "/path/to/the/test_dataset/"
 
 # Name of the model to be tested
 Configs.test_model_name = "model_checkpoint_max_acc.pth.tar"
+
+# Name of the model for prediction
+Configs.prediction_model_name = "model_checkpoint_max_acc.pth.tar"
