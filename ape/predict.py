@@ -1,18 +1,14 @@
 import torch
 from torch import nn
 from torchvision import transforms
-from PIL import Image
+
 import os
-import sys
+import glob
+import argparse
+import importlib
+from PIL import Image
 
-
-class nn_train(object):
-    class View(nn.Module):
-        def __init__(self):
-            super(View, self).__init__()
-
-        def forward(self, x):
-            return x.view(x.size(0), -1)
+from ape.utils.configs import Configs
 
 
 def preprocess(img, dev, transform_img_size_x, transform_img_size_y):
@@ -44,9 +40,6 @@ def load_cp(model_path, name, dev):
 
 
 def predict(images):
-    # Some magic stuff
-    sys.modules["nn_train"] = nn_train
-
     # Params
     model_path = "./models/"
     model_name = "target.pth.tar"
@@ -55,7 +48,7 @@ def predict(images):
     dev_num = None
 
     # Device settings
-    if params.dev_num is None:
+    if dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{dev_num}")
@@ -75,21 +68,46 @@ def predict(images):
         for img in images:
             outputs = model(preprocess(img, dev, transform_img_size_x, transform_img_size_y))
             _, predicted = torch.max(outputs.data, 1)
-            labels.append(predicted.item())
-    
+
+            # labels.append(predicted.item())   # Return label index
+
+            outputs = nn.functional.softmax(outputs, dim=1)
+            labels.append((outputs.data[0][0].item(), outputs.data[0][1].item()))   # Return possibilities
+
     return labels
 
 
-def example():
+def config_path_process(path: str) -> str:
+    path = path.lstrip("./\\")
+    path = path.rstrip("py")
+    path = path.rstrip(".")
+    path = path.replace("/", ".")
+    path = path.replace("\\", ".")
+    return path
+
+
+def solve(configs: Configs, img_path: str) -> None:
     imgs = list()
     for i in range(1, 11):
         imgs.append(Image.open(f"./ds/img ({i}).png"))
 
     result = predict(imgs)
-    
+
     for i in range(1, 11):
         print(f"img ({i}).png  {result[i - 1]}")
 
 
 if __name__ == "__main__":
-    example()
+    parser = argparse.ArgumentParser(description="Predict pictures using trained models.")
+    parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
+    parser.add_argument("--path", dest="img_path", nargs=1, required=True, help="specify the image folder path")
+    args = parser.parse_args()
+
+    config_path = args.config_path[0]
+    img_path = args.config_path[1]
+    assert os.path.isfile(config_path)
+    assert os.path.exists(img_path)
+
+    configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
+
+    solve(configs, img_path)
