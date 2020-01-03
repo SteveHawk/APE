@@ -12,6 +12,7 @@ import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 from ape.utils.params import Params
+from ape.utils.configs import Configs
 from ape.utils import info_cal, load_data, model_store
 
 
@@ -72,25 +73,25 @@ def train() -> None:
             return
 
 
-def prepare() -> None:
+def prepare(configs: Configs) -> None:
     # Device settings
-    if Configs.dev_num is None:
+    if configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
-        dev = torch.device(f"cuda:{Configs.dev_num}")
+        dev = torch.device(f"cuda:{configs.dev_num}")
         # torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
 
     # Load model
-    print(f"Resume: {Configs.resume}")
-    model = Configs.model
-    opt = optim.SGD(model.parameters(), lr=Configs.lr, momentum=0.9)
+    print(f"Resume: {configs.resume}")
+    model = configs.model
+    opt = optim.SGD(model.parameters(), lr=configs.lr, momentum=0.9)
     scheduler = optim.lr_scheduler.ExponentialLR(opt, gamma=0.9, last_epoch=-1)
-    if Configs.resume:
+    if configs.resume:
         start_epoch, model, opt, scheduler, max_acc = model_store.load_cp(model, opt, scheduler,
-            Configs.model_path, Configs.resume_model_name, dev)
+            configs.model_path, configs.resume_model_name, dev)
     else:
         start_epoch = 0
         max_acc = 0
@@ -102,12 +103,12 @@ def prepare() -> None:
     print(f"Optimizer:\n{opt}")
 
     # Load data
-    train_dl, valid_dl = load_data.load_data(Configs, dev)
+    train_dl, valid_dl = load_data.load_data(configs, dev)
 
     # Create model_path folder
-    if not os.path.exists(Configs.model_path):
-        os.makedirs(Configs.model_path)
-    assert os.path.exists(Configs.model_path)
+    if not os.path.exists(configs.model_path):
+        os.makedirs(configs.model_path)
+    assert os.path.exists(configs.model_path)
 
     # For Tensorboard
     # Writer will output to ./runs/ directory by default
@@ -115,7 +116,7 @@ def prepare() -> None:
 
     # Load the params
     Params.model = model
-    Params.num_epochs = Configs.num_epochs
+    Params.num_epochs = configs.num_epochs
     Params.start_epoch = start_epoch
     Params.loss_func = loss_func
     Params.opt = opt
@@ -123,9 +124,9 @@ def prepare() -> None:
     Params.train_dl = train_dl
     Params.valid_dl = valid_dl
     Params.max_acc = max_acc
-    Params.target_acc = Configs.target_acc
-    Params.verbose = Configs.verbose
-    Params.model_path = Configs.model_path
+    Params.target_acc = configs.target_acc
+    Params.verbose = configs.verbose
+    Params.model_path = configs.model_path
     Params.writer = writer
 
 
@@ -146,7 +147,7 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
 
-    Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
+    configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    prepare()
+    prepare(configs)
     train()

@@ -10,6 +10,7 @@ from time import time
 import sys
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
+from ape.utils.configs import Configs
 from ape.utils.load_data import WrappedDataLoader, preprocess, transform
 
 
@@ -28,33 +29,33 @@ def load_cp(model: torch.nn.Sequential, model_path: str, name: str, dev: torch.d
     return model
 
 
-def test() -> None:
+def test(configs: Configs) -> None:
     # Device settings
-    if Configs.dev_num is None:
+    if configs.dev_num is None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
-        dev = torch.device(f"cuda:{Configs.dev_num}")
+        dev = torch.device(f"cuda:{configs.dev_num}")
         # torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")
 
     # Model loading
-    model = load_cp(Configs.model, Configs.model_path, Configs.test_model_name, dev)
+    model = load_cp(configs.model, configs.model_path, configs.test_model_name, dev)
     print(model)
     print("Model Loading Done.")
-    
+
     # Data loading
-    test_ds = ImageFolder(Configs.test_data_path, transform=transform(Configs.img_size_x, Configs.img_size_y,
-        Configs.ds_mean, Configs.ds_std, Configs.gray_scale))
+    test_ds = ImageFolder(configs.test_data_path, transform=transform(configs.img_size_x, configs.img_size_y,
+        configs.ds_mean, configs.ds_std, configs.gray_scale))
     print("ImageFolder Done.")
     print(test_ds.class_to_idx)
-    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=Configs.bs, num_workers=Configs.num_workers), preprocess(Configs.img_size_x, Configs.img_size_y, dev, Configs.gray_scale))
+    test_dl = WrappedDataLoader(DataLoader(test_ds, batch_size=configs.bs, num_workers=configs.num_workers), preprocess(configs.img_size_x, configs.img_size_y, dev, configs.gray_scale))
     print("DataLoader Done.")
-    
+
     model.eval()
     start = time()
-    
+
     correct = 0
     total = 0
     with torch.no_grad():
@@ -90,6 +91,6 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
 
-    Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
+    configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    test()
+    test(configs)
