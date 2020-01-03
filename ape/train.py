@@ -8,8 +8,11 @@ import argparse
 import importlib
 from typing import Tuple, List, Callable
 
-from utils.params import Params
-from utils import info_cal, load_data, model_store
+import sys
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
+
+from ape.utils.params import Params
+from ape.utils import info_cal, load_data, model_store
 
 
 def save_model(valid_acc: float) -> bool:
@@ -143,9 +146,7 @@ if __name__ == "__main__":
     config_path = args.config_path[0]
     assert os.path.isfile(config_path)
 
-    import sys
-    sys.path.insert(1, os.path.join(sys.path[0], ".."))
-    Configs = importlib.import_module(config_path_process(config_path)).Configs
+    Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
     prepare()
     train()
