@@ -59,7 +59,7 @@ def train() -> None:
                 counter += 1
                 progress = round(100 * counter / len(Params.train_dl), 2)
                 print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
-        Params.scheduler.step()
+        Params.scheduler.step(epoch)
 
         # Training info calculation
         train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
@@ -75,7 +75,7 @@ def prepare() -> None:
         dev = torch.device("cpu")
     elif torch.cuda.is_available():
         dev = torch.device(f"cuda:{Configs.dev_num}")
-        torch.backends.cudnn.benchmark = True
+        # torch.backends.cudnn.benchmark = True
     else:
         dev = torch.device("cpu")
     print(f"Device: {dev}")

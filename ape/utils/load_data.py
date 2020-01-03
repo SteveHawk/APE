@@ -1,5 +1,5 @@
 import torch
-from torch import Tensor
+from torch.tensor import Tensor
 from torchvision import transforms  # type: ignore
 from torchvision.datasets import ImageFolder  # type: ignore
 from torch.utils.data import DataLoader, random_split

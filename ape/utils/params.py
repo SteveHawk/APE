@@ -1,4 +1,5 @@
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from typing import Callable, List
 
 from .load_data import WrappedDataLoader
@@ -17,5 +18,5 @@ class Params:
     target_acc: float
     verbose: List[bool]
     model_path: str
-    writer: torch.utils.tensorboard.SummaryWriter
+    writer: SummaryWriter
     epoch: int
