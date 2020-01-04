@@ -44,7 +44,7 @@ def predict(images: List[Tuple[Tensor, str]], model: nn.Sequential, num_classes:
     return results
 
 
-def prepare(configs: Configs, img_path: str, ext: str) -> Tuple[List[Tuple[Tensor, str]], nn.Sequential]:
+def prepare(configs: Configs) -> Tuple[nn.Sequential, torch.device]:
     # Device settings
     if configs.dev_num is None:
         dev = torch.device("cpu")
@@ -61,14 +61,17 @@ def prepare(configs: Configs, img_path: str, ext: str) -> Tuple[List[Tuple[Tenso
     print(model)
     print("Model Loading Done.")
 
-    # Prepare imgs
+    return model, dev
+
+
+def img_prepare(img_path: str, ext: str, configs: Configs, dev: torch.device) -> List[Tuple[Tensor, str]]:
     imgs = list()
     paths = glob.glob(os.path.join(img_path, f"*.{ext}"))
     for path in paths:
         img = Image.open(path)
         imgs.append((preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
             configs.ds_mean, configs.ds_std, configs.gray_scale), path))
-    return imgs, model
+    return imgs
 
 
 def write_json(result: List[Dict[str, Union[str, int, List[float]]]], output_path: str) -> None:
@@ -99,5 +102,7 @@ if __name__ == "__main__":
 
     configs: Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    result = predict(*prepare(configs, img_path, ext), configs.num_classes)
+    model, dev = prepare(configs)
+    imgs = img_prepare(img_path, ext, configs, dev)
+    result = predict(imgs, model, configs.num_classes)
     write_json(result, output_path)
