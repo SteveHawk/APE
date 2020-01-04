@@ -8,32 +8,43 @@ import json
 import argparse
 import importlib
 from PIL import Image
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
+
+import sys
+sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 from ape.utils.model_store import load_model
 from ape.utils.load_data import preprocess_x
 from ape.utils.configs import Configs, config_path_process
 
 
-def predict(images: List[Tensor], model: nn.Sequential) -> List[Tuple[float, ...]]:
-    labels: List[Tuple[float, ...]] = list()
+def predict(images: List[Tuple[Tensor, str]], model: nn.Sequential, num_classes: int) \
+                                    -> List[Dict[str, Union[str, int, List[float]]]]:
+    results = list()
     with torch.no_grad():
-        for img in images:
+        for img, path in images:
+            print(path, end="\r")
+
             outputs = model(img)
+            result: Dict[str, Union[str, int, List[float]]] = dict()
+            result["path"] = path
 
-            # # Return label index
-            # _, predicted = torch.max(outputs.data, 1)
-            # labels.append(predicted.item())
+            # label index
+            _, predicted = torch.max(outputs.data, 1)
+            result["result"] = int(predicted.item())
 
-            # Return possibilities
-            outputs = nn.functional.softmax(outputs, dim=1)
-            # TODO: Multi class
-            labels.append((outputs.data[0][0].item(), outputs.data[0][1].item()))
+            # possibilities
+            poss = nn.functional.softmax(outputs, dim=1)
+            poss_list = list()
+            for i in range(num_classes):
+                poss_list.append(poss.data[0][i].item())
+            result["possibilities"] = poss_list
 
-    return labels
+            results.append(result)
+    return results
 
 
-def prepare(configs: Configs, img_path: str) -> Tuple[List[Tensor], nn.Sequential]:
+def prepare(configs: Configs, img_path: str, ext: str) -> Tuple[List[Tuple[Tensor, str]], nn.Sequential]:
     # Device settings
     if configs.dev_num is None:
         dev = torch.device("cpu")
@@ -52,30 +63,33 @@ def prepare(configs: Configs, img_path: str) -> Tuple[List[Tensor], nn.Sequentia
 
     # Prepare imgs
     imgs = list()
-    for i in range(1, 11):
-        img = Image.open(f"./ds/img ({i}).png")
-        imgs.append(preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
-            configs.ds_mean, configs.ds_std, configs.gray_scale))
-
+    paths = glob.glob(os.path.join(img_path, f"*.{ext}"))
+    for path in paths:
+        img = Image.open(path)
+        imgs.append((preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
+            configs.ds_mean, configs.ds_std, configs.gray_scale), path))
     return imgs, model
 
 
-def write_json(result: List[Tuple[float, ...]], output_path: str) -> None:
-    output: Dict[str, str] = dict()
-    with open(output_path, "w") as f:
-        json.dump(output, f)
+def write_json(result: List[Dict[str, Union[str, int, List[float]]]], output_path: str) -> None:
+    path = os.path.join(output_path, "output.json")
+    with open(path, "w") as f:
+        json.dump(result, f)
+    print(f"Result saved at {path}.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Predict pictures using trained models.")
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     parser.add_argument("--path", dest="img_path", nargs=1, required=True, help="specify the image folder path")
+    parser.add_argument("--ext", dest="ext", nargs=1, required=True, help="specify the image extension name")
     parser.add_argument("--output", dest="output_path", nargs=1, required=True, help="specify the output path")
     args = parser.parse_args()
 
     config_path = args.config_path[0]
-    img_path = args.config_path[1]
-    output_path = args.config_path[2]
+    img_path = args.img_path[0]
+    ext = args.ext[0]
+    output_path = args.output_path[0]
 
     assert os.path.isfile(config_path)
     assert os.path.exists(img_path)
@@ -83,7 +97,7 @@ if __name__ == "__main__":
         os.makedirs(output_path)
     assert os.path.exists(output_path)
 
-    configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
+    configs: Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    result = predict(*prepare(configs, img_path))
+    result = predict(*prepare(configs, img_path, ext), configs.num_classes)
     write_json(result, output_path)
