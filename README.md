@@ -36,14 +36,32 @@ And it will be loaded automatically.
 
 ### Training
 
-To train the model, first define a model config, `configs/model.py` for example. Then run `python -u ape/train.py --config configs/model.py`.
+To train the model, first define a model config, `configs/model.py` for example. Then run:
+
+```bash
+python -u ape/train.py --config /path/to/your/config
+# Example:
+python -u ape/train.py --config configs/model.py
+```
 
 You can also resume a training process using a model checkpoint. Set `resume = True` and set the checkpoint path in the config, and it will be resumed from the checkpoint.
 
 ### Evaluation
 
-To test the model using test dataset, run `python -u ape/test.py --config <YOUR-CONFIG-LOCATION>`.
+To test the model using test dataset, run:
+
+```bash
+python -u ape/test.py --config /path/to/your/config
+# Example:
+python -u ape/test.py --config configs/model.py
+```
 
 ### Inference
 
-You can use `predict.py` to deploy the trained model.
+You can use `predict.py` to inference images using trained model. Run:
+
+```bash
+python -u ape/predict.py --config /path/to/your/config --path /path/to/your/images --ext <Extension-Name> --output /path/to/output/result
+# Example:
+python -u ape/predict.py --config configs/model.py --path /data/dataset/ --ext png --output infer_output/
+```
