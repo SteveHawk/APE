@@ -1,19 +1,21 @@
 import torch
 from torch import nn
+from torch.tensor import Tensor
 
 import os
 import glob
+import json
 import argparse
 import importlib
 from PIL import Image
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from ape.utils.model_store import load_model
 from ape.utils.load_data import preprocess_x
 from ape.utils.configs import Configs, config_path_process
 
 
-def predict(images: List[Image], model: nn.Sequential) -> List[Tuple[float, ...]]:
+def predict(images: List[Tensor], model: nn.Sequential) -> List[Tuple[float, ...]]:
     labels: List[Tuple[float, ...]] = list()
     with torch.no_grad():
         for img in images:
@@ -31,7 +33,7 @@ def predict(images: List[Image], model: nn.Sequential) -> List[Tuple[float, ...]
     return labels
 
 
-def solve(configs: Configs, img_path: str) -> None:
+def prepare(configs: Configs, img_path: str) -> Tuple[List[Tensor], nn.Sequential]:
     # Device settings
     if configs.dev_num is None:
         dev = torch.device("cpu")
@@ -48,30 +50,40 @@ def solve(configs: Configs, img_path: str) -> None:
     print(model)
     print("Model Loading Done.")
 
-    # Prediction
+    # Prepare imgs
     imgs = list()
     for i in range(1, 11):
         img = Image.open(f"./ds/img ({i}).png")
         imgs.append(preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
             configs.ds_mean, configs.ds_std, configs.gray_scale))
 
-    result = predict(imgs, model)
+    return imgs, model
 
-    for i in range(1, 11):
-        print(f"img ({i}).png  {result[i - 1]}")
+
+def write_json(result: List[Tuple[float, ...]], output_path: str) -> None:
+    output: Dict[str, str] = dict()
+    with open(output_path, "w") as f:
+        json.dump(output, f)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Predict pictures using trained models.")
     parser.add_argument("--config", dest="config_path", nargs=1, required=True, help="specify the config location")
     parser.add_argument("--path", dest="img_path", nargs=1, required=True, help="specify the image folder path")
+    parser.add_argument("--output", dest="output_path", nargs=1, required=True, help="specify the output path")
     args = parser.parse_args()
 
     config_path = args.config_path[0]
     img_path = args.config_path[1]
+    output_path = args.config_path[2]
+
     assert os.path.isfile(config_path)
     assert os.path.exists(img_path)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    assert os.path.exists(output_path)
 
     configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
-    solve(configs, img_path)
+    result = predict(*prepare(configs, img_path))
+    write_json(result, output_path)
