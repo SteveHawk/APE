@@ -44,6 +44,8 @@ python -u ape/train.py --config /path/to/your/config
 python -u ape/train.py --config configs/model.py
 ```
 
+> Note that config files should *always* be placed within the `configs` folder due to import mechanisms of python.
+
 You can also resume a training process using a model checkpoint. Set `resume = True` and set the checkpoint path in the config, and it will be resumed from the checkpoint.
 
 ### Evaluation
