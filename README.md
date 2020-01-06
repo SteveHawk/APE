@@ -12,9 +12,10 @@ Configuration files are in `configs` folder. Configs are python files.
 
 ## Requirements
 
-- Python>=3.6
-- Pytorch>=1.1.0
-- Tensorboard==1.14.0 (better with tensorflow installed, but not required)
+- python>=3.6
+- pytorch>=1.1.0
+- tensorboard>=1.14.0 (better with tensorflow installed, but not required)
+- joblib>=0.14.1
 
 ## Quick start
 

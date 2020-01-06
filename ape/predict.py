@@ -7,7 +7,9 @@ import glob
 import json
 import argparse
 import importlib
+import multiprocessing
 from PIL import Image  # type: ignore
+from joblib import Parallel, delayed  # type: ignore
 from typing import List, Tuple, Dict, Union
 
 import sys
@@ -16,32 +18,6 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 from ape.utils.model_store import load_model
 from ape.utils.load_data import preprocess_x
 from ape.utils.configs import Configs, config_path_process
-
-
-def predict(images: List[Tuple[Tensor, str]], model: nn.Sequential, num_classes: int) \
-                                    -> List[Dict[str, Union[str, int, List[float]]]]:
-    results = list()
-    with torch.no_grad():
-        for img, path in images:
-            print(path, end="\r")
-
-            outputs = model(img)
-            result: Dict[str, Union[str, int, List[float]]] = dict()
-            result["path"] = path
-
-            # label index
-            _, predicted = torch.max(outputs.data, 1)
-            result["result"] = int(predicted.item())
-
-            # possibilities
-            poss = nn.functional.softmax(outputs, dim=1)
-            poss_list = list()
-            for i in range(num_classes):
-                poss_list.append(poss.data[0][i].item())
-            result["possibilities"] = poss_list
-
-            results.append(result)
-    return results
 
 
 def prepare(configs: Configs) -> Tuple[nn.Sequential, torch.device]:
@@ -64,20 +40,49 @@ def prepare(configs: Configs) -> Tuple[nn.Sequential, torch.device]:
     return model, dev
 
 
-def img_prepare(img_path: str, ext: str, configs: Configs, dev: torch.device) -> List[Tuple[Tensor, str]]:
-    imgs = list()
+def predict(path: str, configs: Configs, dev: torch.device, model: nn.Sequential,
+                results: List[Dict[str, Union[str, int, List[float]]]]) -> None:
+    print(path, end="\r")
+
+    img_raw = Image.open(path)
+    img = preprocess_x(img_raw, dev, configs.img_size_x, configs.img_size_y,
+        configs.ds_mean, configs.ds_std, configs.gray_scale)
+
+    with torch.no_grad():
+        outputs = model(img)
+        result: Dict[str, Union[str, int, List[float]]] = dict()
+        result["path"] = path
+
+        # label index
+        _, predicted = torch.max(outputs.data, 1)
+        result["result"] = int(predicted.item())
+
+        # possibilities
+        poss = nn.functional.softmax(outputs, dim=1)
+        result["possibilities"] = poss.data[0].tolist()
+
+    results.append(result)
+
+
+def img_predict(img_path: str, ext: str, configs: Configs, dev: torch.device, model: nn.Sequential) \
+                                                    -> List[Dict[str, Union[str, int, List[float]]]]:
     paths = glob.glob(os.path.join(img_path, f"*.{ext}"))
-    for path in paths:
-        img = Image.open(path)
-        imgs.append((preprocess_x(img, dev, configs.img_size_x, configs.img_size_y,
-            configs.ds_mean, configs.ds_std, configs.gray_scale), path))
-    return imgs
+
+    n_process = multiprocessing.cpu_count()
+    print(f"Using {n_process} threads.")
+
+    results: List[Dict[str, Union[str, int, List[float]]]] = list()
+    Parallel(n_jobs=n_process, require="sharedmem")(
+        delayed(predict)(path, configs, dev, model, results) for path in paths
+    )
+
+    return results
 
 
-def write_json(result: List[Dict[str, Union[str, int, List[float]]]], output_path: str) -> None:
+def write_json(results: List[Dict[str, Union[str, int, List[float]]]], output_path: str) -> None:
     path = os.path.join(output_path, "output.json")
     with open(path, "w") as f:
-        json.dump(result, f)
+        json.dump(results, f)
     print(f"Result saved at {path}.")
 
 
@@ -103,6 +108,5 @@ if __name__ == "__main__":
     configs: Configs = importlib.import_module(config_path_process(config_path)).Configs  # type: ignore
 
     model, dev = prepare(configs)
-    imgs = img_prepare(img_path, ext, configs, dev)
-    result = predict(imgs, model, configs.num_classes)
-    write_json(result, output_path)
+    results = img_predict(img_path, ext, configs, dev, model)
+    write_json(results, output_path)
