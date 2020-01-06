@@ -36,8 +36,8 @@ def save_model(valid_acc: float) -> bool:
     return False
 
 
-def progress_bar(progress: float, steps: int) -> None:
-    print("Epoch progress: |", end="")
+def progress_bar(progress: float, steps: int, epoch: int) -> None:
+    print(f"Epoch {epoch} progress: |", end="")
     print("*" * int(progress / 5), end="")
     print("_" * int(20 - progress / 5), end="")
     print(f"| {round(progress, 2)}%, step {steps}    ", end="\r")
@@ -71,7 +71,7 @@ def train() -> None:
 
             if Params.verbose[4]:
                 counter += 1
-                progress_bar(100 * counter / len(Params.train_dl), Params.steps)
+                progress_bar(100 * counter / len(Params.train_dl), Params.steps, epoch)
         Params.scheduler.step(epoch)
 
 
