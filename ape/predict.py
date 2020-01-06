@@ -44,8 +44,8 @@ def predict(path: str, configs: Configs, dev: torch.device, model: nn.Sequential
                 results: List[Dict[str, Union[str, int, List[float]]]]) -> None:
     print(path, end="\r")
 
-    img_raw = Image.open(path)
-    img = preprocess_x(img_raw, dev, configs.img_size_x, configs.img_size_y,
+    img_raw: Image.Image = Image.open(path)
+    img: Tensor = preprocess_x(img_raw, dev, configs.img_size_x, configs.img_size_y,
         configs.ds_mean, configs.ds_std, configs.gray_scale)
 
     with torch.no_grad():
