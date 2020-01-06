@@ -22,17 +22,17 @@ def save_model(valid_acc: float) -> bool:
         # Save best record
         if valid_acc > Params.max_acc:
             Params.max_acc = valid_acc
-            model_store.save_cp(valid_acc, f"model_checkpoint_max_acc.pth.tar")
+            model_store.save_cp(valid_acc, f"model_cp_max_acc.pth.tar")
         # Save target model
         if valid_acc > Params.target_acc:
-            model_store.save_cp(valid_acc, f"target_acc_{Params.epoch}.pth.tar")
+            model_store.save_cp(valid_acc, f"target_acc_{Params.steps}.pth.tar")
             print("Accuracy target reached, model saved. Training stopped.")
             Params.writer.close()
             return True
 
     # Save checkpoint
-    model_store.save_cp(valid_acc, f"model_checkpoint_{Params.epoch}.pth.tar")
-    print(f"Checkpoint of epoch={Params.epoch} saved.")
+    model_store.save_cp(valid_acc, f"model_cp_{Params.steps}.pth.tar")
+    print(f"Checkpoint of epoch={Params.steps} saved.")
     return False
 
 
@@ -40,7 +40,7 @@ def progress_bar(progress: float, steps: int) -> None:
     print("Epoch progress: |", end="")
     print("*" * int(progress / 5), end="")
     print("_" * int(20 - progress / 5), end="")
-    print(f"| {round(progress, 2)}%, step {steps}", end="\r")
+    print(f"| {round(progress, 2)}%, step {steps}    ", end="\r")
 
 
 def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
@@ -52,8 +52,8 @@ def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
 
 
 def train() -> None:
-    print("epoch | train_loss | valid_loss | train_acc | valid_acc")
-    steps = 0
+    print("step | train_loss | valid_loss | train_acc | valid_acc")
+    Params.steps = 0
     for epoch in range(Params.start_epoch, Params.max_epochs):
         Params.epoch = epoch
         counter = 0
@@ -62,16 +62,16 @@ def train() -> None:
         for xb, yb in Params.train_dl:
             loss_batch(xb, yb)
 
-            steps += 1
-            if steps % Params.log_step == 0:
+            Params.steps += 1
+            if Params.steps % Params.log_step == 0:
                 train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
-                print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
+                print(f"{Params.steps} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}    ")
                 if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
                     return
 
             if Params.verbose[4]:
                 counter += 1
-                progress_bar(100 * counter / len(Params.train_dl), steps)
+                progress_bar(100 * counter / len(Params.train_dl), Params.steps)
         Params.scheduler.step(epoch)
 
 

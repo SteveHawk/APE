@@ -78,13 +78,13 @@ Configs.num_workers = 0
 Configs.resume = False
 
 # The name of the model for resuming
-Configs.resume_model_name = "model_checkpoint_max_acc.pth.tar"
+Configs.resume_model_name = ""
 
 # Location of test dataset
 Configs.test_data_path = "/path/to/the/test_dataset/"
 
 # Name of the model to be tested
-Configs.test_model_name = "model_checkpoint_max_acc.pth.tar"
+Configs.test_model_name = "model_cp_max_acc.pth.tar"
 
 # Name of the model for prediction
-Configs.prediction_model_name = "model_checkpoint_max_acc.pth.tar"
+Configs.prediction_model_name = "model_cp_max_acc.pth.tar"

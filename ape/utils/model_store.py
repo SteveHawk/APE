@@ -26,7 +26,7 @@ def load_cp(model: torch.nn.Sequential, opt: SGD, scheduler: lr_scheduler.Expone
     assert os.path.isfile(path)
     checkpoint = torch.load(path, map_location=dev)
 
-    start_epoch = checkpoint["epoch"] + 1
+    start_epoch = checkpoint["epoch"]
     model.load_state_dict(checkpoint["model"])
     opt.load_state_dict(checkpoint["optimizer"])
     scheduler.load_state_dict(checkpoint["scheduler"])

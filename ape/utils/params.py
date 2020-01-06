@@ -21,3 +21,4 @@ class Params:
     model_path: str
     writer: SummaryWriter
     epoch: int
+    steps: int
