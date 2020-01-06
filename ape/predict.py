@@ -7,7 +7,7 @@ import glob
 import json
 import argparse
 import importlib
-from PIL import Image
+from PIL import Image  # type: ignore
 from typing import List, Tuple, Dict, Union
 
 import sys
