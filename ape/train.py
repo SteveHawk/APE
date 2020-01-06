@@ -89,6 +89,7 @@ def prepare(configs: Configs) -> None:
     # Load model
     print(f"Resume: {configs.resume}")
     model = configs.model
+    model.to(dev)
     opt = optim.SGD(model.parameters(), lr=configs.lr, momentum=0.9)
     scheduler = optim.lr_scheduler.ExponentialLR(opt, gamma=0.9, last_epoch=-1)
     if configs.resume:
@@ -97,7 +98,6 @@ def prepare(configs: Configs) -> None:
     else:
         start_epoch = 0
         max_acc = 0
-    model.to(dev)
     loss_func = F.cross_entropy
 
     # Model info
