@@ -36,6 +36,13 @@ def save_model(valid_acc: float) -> bool:
     return False
 
 
+def progress_bar(progress: float, steps: int) -> None:
+    print("Epoch progress: |", end="")
+    print("*" * int(progress / 5), end="")
+    print("_" * int(20 - progress / 5), end="")
+    print(f"| {round(progress, 2)}%, step {steps}", end="\r")
+
+
 def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
     loss = Params.loss_func(Params.model(xb), yb)
 
@@ -45,32 +52,27 @@ def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
 
 
 def train() -> None:
-    # Info header
     print("epoch | train_loss | valid_loss | train_acc | valid_acc")
-
-    # Start training epochs
-    for epoch in range(Params.start_epoch, Params.num_epochs):
-        # Add epoch info in Params
+    steps = 0
+    for epoch in range(Params.start_epoch, Params.max_epochs):
         Params.epoch = epoch
-
-        # Training mode
-        Params.model.train()
         counter = 0
+
+        Params.model.train()
         for xb, yb in Params.train_dl:
             loss_batch(xb, yb)
-            # Epoch progress bar
+
+            steps += 1
+            if steps % Params.log_step == 0:
+                train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
+                print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
+                if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
+                    return
+
             if Params.verbose[4]:
                 counter += 1
-                progress = round(100 * counter / len(Params.train_dl), 2)
-                print("Epoch progress: |" + "*"*int(progress/5) + "_"*int(20-progress/5) + f"| {progress}%", end="\r")
+                progress_bar(100 * counter / len(Params.train_dl), steps)
         Params.scheduler.step(epoch)
-
-        # Training info calculation
-        train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
-        print(f"{epoch} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}")
-
-        if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
-            return
 
 
 def prepare(configs: Configs) -> None:
@@ -116,7 +118,7 @@ def prepare(configs: Configs) -> None:
 
     # Load the params
     Params.model = model
-    Params.num_epochs = configs.num_epochs
+    Params.max_epochs = configs.max_epochs
     Params.start_epoch = start_epoch
     Params.loss_func = loss_func
     Params.opt = opt
@@ -125,6 +127,7 @@ def prepare(configs: Configs) -> None:
     Params.valid_dl = valid_dl
     Params.max_acc = max_acc
     Params.target_acc = configs.target_acc
+    Params.log_step = configs.log_step
     Params.verbose = configs.verbose
     Params.model_path = configs.model_path
     Params.writer = writer

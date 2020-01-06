@@ -6,7 +6,7 @@ class Configs:
     num_classes: int
     gray_scale: bool
     model: nn.Sequential
-    num_epochs: int
+    max_epochs: int
     bs: int
     lr: float
     target_acc: int
@@ -16,11 +16,12 @@ class Configs:
     ds_std: List[float]
     img_size_x: int
     img_size_y: int
-    resume: bool
-    resume_model_name: str
+    log_step: int
     verbose: List[bool]
     dev_num: Optional[int]
     num_workers: int
+    resume: bool
+    resume_model_name: str
     test_data_path: str
     test_model_name: str
     prediction_model_name: str

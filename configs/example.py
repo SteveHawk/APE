@@ -35,8 +35,8 @@ Configs.model = nn.Sequential(
     View(),
 )
 
-# How many epochs
-Configs.num_epochs = 50
+# How many epochs maximum
+Configs.max_epochs = 50
 
 # Bach size
 Configs.bs = 64
@@ -62,11 +62,8 @@ Configs.ds_std = [0.5]
 Configs.img_size_x = 256
 Configs.img_size_y = 256
 
-# If resume training
-Configs.resume = False
-
-# The name of the model for resuming
-Configs.resume_model_name = "model_checkpoint_max_acc.pth.tar"
+# How many steps to record a log
+Configs.log_step = 20
 
 # Output info control
 Configs.verbose = [True, True, True, True, True]  # train_loss, valid_loss, train_acc, valid_acc, epoch progress bar
@@ -76,6 +73,12 @@ Configs.dev_num = None
 
 # How many processes/threads for dataloader. 0 means working in main process.
 Configs.num_workers = 0
+
+# If resume training
+Configs.resume = False
+
+# The name of the model for resuming
+Configs.resume_model_name = "model_checkpoint_max_acc.pth.tar"
 
 # Location of test dataset
 Configs.test_data_path = "/path/to/the/test_dataset/"

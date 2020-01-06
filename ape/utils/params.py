@@ -7,7 +7,7 @@ from ape.utils.load_data import WrappedDataLoader
 
 class Params:
     model: torch.nn.Sequential
-    num_epochs: int
+    max_epochs: int
     start_epoch: int
     loss_func: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
     opt: torch.optim.SGD
@@ -16,6 +16,7 @@ class Params:
     valid_dl: WrappedDataLoader
     max_acc: float
     target_acc: float
+    log_step: int
     verbose: List[bool]
     model_path: str
     writer: SummaryWriter
