@@ -40,7 +40,7 @@ def progress_bar(progress: float, steps: int, epoch: int) -> None:
     print(f"Epoch {epoch} progress: |", end="")
     print("*" * int(progress / 5), end="")
     print("_" * int(20 - progress / 5), end="")
-    print(f"| {round(progress, 2)}%, step {steps}    ", end="\r")
+    print(f"| {round(progress, 2)}%, step {steps}" + " "*69, end="\r")
 
 
 def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
@@ -65,7 +65,7 @@ def train() -> None:
             Params.steps += 1
             if Params.steps % Params.log_step == 0:
                 train_loss, valid_loss, train_acc, valid_acc = info_cal.training_info()
-                print(f"{Params.steps} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}    ")
+                print(f"{Params.steps} | {train_loss} | {valid_loss} | {train_acc} | {valid_acc}" + " "*69)
                 if Params.verbose[3] and isinstance(valid_acc, float) and save_model(valid_acc):
                     return
 
