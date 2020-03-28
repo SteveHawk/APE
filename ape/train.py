@@ -32,7 +32,7 @@ def save_model(valid_acc: float) -> bool:
 
     # Save checkpoint
     model_store.save_cp(valid_acc, f"model_cp_{Params.steps}.pth.tar")
-    print(f"Checkpoint of epoch={Params.steps} saved.")
+    print(f"Checkpoint of epoch={Params.epoch}, step={Params.steps} saved.")
     return False
 
 
@@ -44,6 +44,7 @@ def progress_bar(progress: float, steps: int, epoch: int) -> None:
 
 
 def loss_batch(xb: torch.Tensor, yb: torch.Tensor) -> None:
+    Params.model.train()
     loss = Params.loss_func(Params.model(xb), yb)
 
     loss.backward()
@@ -58,7 +59,6 @@ def train() -> None:
         Params.epoch = epoch
         counter = 0
 
-        Params.model.train()
         for xb, yb in Params.train_dl:
             loss_batch(xb, yb)
 
